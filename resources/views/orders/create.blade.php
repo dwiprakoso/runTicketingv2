@@ -91,7 +91,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <img src="{{ asset('img/sizeChart.jpg') }}"  width="500px" class="mb-3">
+                    <img src="{{ asset('img/sizeChart.jpg') }}"  width="80%" class="mb-3">
                     <div class="mb-3">
                         <label for="size_chart" class="form-label">Size Chart</label>
                         <select name="size_chart" id="size_chart" class="form-control">
@@ -166,7 +166,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <img src="{{ asset('img/sizeChart.jpg') }}"  width="500px" class="mb-3">
+                        <img src="{{ asset('img/sizeChart.jpg') }}"  width="80%" class="mb-3">
                         <div class="mb-3">
                             <label for="size_anak" class="form-label">Size Chart Anak</label>
                             <select name="size_anak" id="size_anak" class="form-control">
