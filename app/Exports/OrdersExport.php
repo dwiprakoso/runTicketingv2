@@ -11,12 +11,6 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $status;
 
-    /**
-     * Create a new export instance.
-     *
-     * @param string|null $status
-     * @return void
-     */
     public function __construct($status = null)
     {
         $this->status = $status;
@@ -26,7 +20,6 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
     {
         $query = Order::with(['user', 'ticketCategory', 'orderVoucher.voucher', 'addOns', 'payment']);
         
-        // Filter berdasarkan status jika disediakan
         if ($this->status) {
             $query->where('status', $this->status);
         }
@@ -37,14 +30,30 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
     public function headings(): array
     {
         return [
-            'ID Pesanan',
-            'Nama Pemesan',
+            'ID',
+            'Nama Lengkap',
             'Email',
+            'No. HP',
+            'NIK',
+            'Gender',
+            'Tgl Lahir',
+            'Gol. Darah',
+            'Alamat',
+            'Size Baju',
+            'Nama BIB',
+            'Komunitas',
+            'Kontak Darurat',
+            'Jarak Lari',
+            'Nama Anak',
+            'Usia Anak',
+            'Size Baju Anak',
+            'Nama BIB Anak',
             'Kategori Tiket',
-            'Kode Voucher',
+            'Harga Tiket',
+            'Total Diskon',
+            'Total Biaya',
+            'Voucher',
             'Status',
-            'Add Ons',
-            'Bukti Pembayaran',
             'Tanggal Pemesanan'
         ];
     }
@@ -53,14 +62,30 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
     {
         return [
             $order->id,
-            $order->user->name,
+            $order->user->first_name . ' ' . $order->user->last_name,
             $order->user->email,
+            $order->user->no_hp,
+            $order->user->nik,
+            ucfirst($order->user->gender),
+            optional($order->user->tgl_lahir)->format('d/m/Y'),
+            $order->user->gol_darah ?? '-',
+            $order->user->alamat,
+            $order->size_chart,
+            $order->bib_name,
+            $order->user->komunitas ?? '-',
+            $order->user->kontak_darurat_name . ' - ' . $order->user->kontak_darurat_no,
+            $order->jarak_lari ?? '-',
+            $order->nama_anak ?? '-',
+            $order->usia_anak ?? '-',
+            $order->size_anak ?? '-',
+            $order->bib_anak ?? '-',
             $order->ticketCategory->name,
+            'Rp ' . number_format($order->ticketCategory->price ?? 0, 0, ',', '.'),
+            'Rp ' . number_format($order->orderVoucher->voucher->discount_amount ?? 0, 0, ',', '.'),
+            'Rp ' . number_format($order->payment->amount ?? 0, 0, ',', '.'),
             $order->orderVoucher->voucher->code ?? 'Tidak ada',
-            $order->status,
-            $order->addOns->pluck('name')->implode(', '), // Menggabungkan add-ons
-            asset('storage/' . ($order->payment->proof_image ?? '')), // Link bukti pembayaran
-            $order->created_at->format('d-m-Y H:i')
+            ucfirst($order->status),
+            $order->created_at->format('d-m-Y')
         ];
     }
 }

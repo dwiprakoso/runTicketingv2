@@ -32,4 +32,7 @@ Route::post('/admin/orders/{orderId}/verify', [AdminController::class, 'verifyOr
 Route::post('/admin/orders/{orderId}/reject', [AdminController::class, 'rejectOrder'])->name('admin.orders.reject');
 Route::post('/admin/categories/{categoryId}', [AdminController::class, 'updateTicketCategory'])->name('admin.categories.update');
 Route::post('/admin/categories', [AdminController::class, 'createTicketCategory'])->name('admin.categories.create');
+Route::post('/admin/categories/{categoryId}/delete', [AdminController::class, 'deleteTicketCategory'])->name('admin.categories.delete');
 Route::post('/admin/vouchers', [AdminController::class, 'createVoucher'])->name('admin.vouchers.create');
+Route::post('/admin/vouchers/{voucherId}/update', [AdminController::class, 'updateVoucher'])->name('admin.vouchers.update');
+Route::post('/admin/vouchers/{voucherId}/delete', [AdminController::class, 'deleteVoucher'])->name('admin.vouchers.delete');

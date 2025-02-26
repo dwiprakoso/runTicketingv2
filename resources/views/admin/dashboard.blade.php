@@ -43,6 +43,8 @@
                                         <th>Size Baju Anak</th>
                                         <th>Nama BIB Anak</th>
                                         <th>Kategori Tiket</th>
+                                        <th>Harga Tiket</th>
+                                        <th>Total Diskon</th>
                                         <th>Total Biaya</th>
                                         <th>Voucher</th>
                                         <th>Status</th>
@@ -74,6 +76,8 @@
                                             <td>{{ $order->size_anak }}</td>
                                             <td>{{ $order->bib_anak }}</td>
                                             <td>{{ $order->ticketCategory->name }}</td>
+                                            <td>Rp {{ number_format($order->ticketCategory->price ?? 0, 0, ',', '.') }}</td>
+                                            <td>Rp {{ number_format($order->orderVoucher->voucher->discount_amount ?? 0, 0, ',', '.') }}</td>                                            
                                             <td>Rp {{ number_format($order->payment->amount ?? 0, 0, ',', '.') }}</td>
                                             <td>
                                                 @if($order->orderVoucher && $order->orderVoucher->voucher)
@@ -115,6 +119,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="d-flex justify-content-center mt-3">
+                            {{ $orders->links() }}
+                        </div>
                     @endif
                 </div>
             </div>
@@ -124,7 +131,7 @@
     <!-- Ticket Categories Section -->
     <div class="row mt-4">
         <div class="col-md-6">
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">Kategori Tiket</h5>
                 </div>
@@ -133,17 +140,15 @@
                         <thead>
                             <tr>
                                 <th>Nama</th>
-                                {{-- <th>Deskripsi</th> --}}
                                 <th>Harga</th>
                                 <th>Sisa Kuota</th>
-                                {{-- <th>Aksi</th> --}}
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($categories as $category)
                                 <tr>
                                     <td>{{ $category->name }}</td>
-                                    {{-- <td>{{ $category->description }}</td> --}}
                                     <td>Rp {{ number_format($category->price, 0, ',', '.') }}</td>
                                     <td>
                                         <span class="badge 
@@ -157,107 +162,292 @@
                                             {{ $category->availableQuota() }}
                                         </span>
                                     </td>
-                                    {{-- <td>
-                                        <form action="{{ route('admin.categories.update', $category->id) }}" method="POST">
-                                            @csrf
-                                            @method('POST')
-                                            <button type="submit" class="btn btn-primary btn-sm">Perbarui</button>
-                                        </form>
-                                    </td> --}}
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-sm edit-category-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editCategoryModal" 
+                                            data-id="{{ $category->id }}"
+                                            data-name="{{ $category->name }}"
+                                            data-price="{{ $category->price }}"
+                                            data-quota="{{ $category->quota }}"
+                                            data-description="{{ $category->description }}">
+                                            Edit
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-category-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteCategoryModal"
+                                            data-id="{{ $category->id }}"
+                                            data-name="{{ $category->name }}">
+                                            Hapus
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Voucher Section -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Voucher</h5>
-                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
-                        Tambah Voucher Baru
+                    
+                    <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        Tambah Kategori Baru
                     </button>
                 </div>
-                <div class="card-body">
-                    @if($vouchers->isEmpty())
-                        <p>Tidak ada voucher.</p>
-                    @else
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Kode Voucher</th>
-                                    <th>Diskon</th>
-                                    <th>Sisa Kuota</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($vouchers as $voucher)
-                                    <tr>
-                                        <td>{{ $voucher->code }}</td>
-                                        <td>Rp {{ number_format($voucher->discount_amount, 0, ',', '.') }}</td>
-                                        <td>
-                                            <span class="badge 
-                                                @if($voucher->availableQuota() <= 0) 
-                                                    bg-danger 
-                                                @elseif($voucher->availableQuota() <= 5) 
-                                                    bg-warning 
-                                                @else 
-                                                    bg-success 
-                                                @endif">
-                                                {{ $voucher->availableQuota() }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                </div>
             </div>
         </div>
-
-        <!-- Modal Tambah Voucher Baru -->
-        <div class="modal fade" id="createVoucherModal" tabindex="-1" aria-labelledby="createVoucherModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createVoucherModalLabel">Tambah Voucher Baru</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form action="{{ route('admin.vouchers.create') }}" method="POST">
-                        @csrf
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="voucherCode" class="form-label">Kode Voucher</label>
-                                <input type="text" class="form-control" id="voucherCode" name="code" required 
-                                    placeholder="Masukkan kode voucher (unik)">
-                            </div>
-                            <div class="mb-3">
-                                <label for="discountAmount" class="form-label">Jumlah Diskon (Rp)</label>
-                                <input type="number" class="form-control" id="discountAmount" name="discount_amount" 
-                                    required min="0" placeholder="Masukkan jumlah diskon">
-                            </div>
-                            <div class="mb-3">
-                                <label for="voucherQuota" class="form-label">Kuota Voucher</label>
-                                <input type="number" class="form-control" id="voucherQuota" name="quota" 
-                                    required min="1" placeholder="Masukkan jumlah kuota voucher">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Simpan Voucher</button>
-                        </div>
-                    </form>
+                <!-- Voucher Section -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Daftar Voucher</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Kode Voucher</th>
+                                <th>Diskon</th>
+                                <th>Sisa Kuota</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($vouchers as $voucher)
+                                <tr>
+                                    <td>{{ $voucher->code }}</td>
+                                    <td>Rp {{ number_format($voucher->discount_amount, 0, ',', '.') }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            @if($voucher->availableQuota() <= 0) 
+                                                bg-danger 
+                                            @elseif($voucher->availableQuota() <= 5) 
+                                                bg-warning 
+                                            @else 
+                                                bg-success 
+                                            @endif">
+                                            {{ $voucher->availableQuota() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-sm edit-voucher-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editVoucherModal" 
+                                            data-id="{{ $voucher->id }}"
+                                            data-code="{{ $voucher->code }}"
+                                            data-discount="{{ $voucher->discount_amount }}"
+                                            data-quota="{{ $voucher->quota }}">
+                                            Edit
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-voucher-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteVoucherModal"
+                                            data-id="{{ $voucher->id }}"
+                                            data-code="{{ $voucher->code }}">
+                                            Hapus
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    
+                    <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
+                        Tambah Voucher Baru
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Verification Modal (ADDED CONTENT HERE) -->
+<!-- Edit Category Modal (SINGLE MODAL) -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">Edit Kategori Tiket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCategoryForm" action="" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">Nama Kategori</label>
+                        <input type="text" class="form-control" id="editName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrice" class="form-label">Harga</label>
+                        <input type="number" class="form-control" id="editPrice" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuota" class="form-label">Kuota</label>
+                        <input type="number" class="form-control" id="editQuota" name="quota" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Deskripsi</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Category Modal (SINGLE MODAL) -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCategoryModalLabel">Hapus Kategori Tiket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus kategori "<strong id="deleteCategoryName"></strong>"?</p>
+                <p class="text-danger">Perhatian: Kategori dengan pesanan terkait tidak dapat dihapus.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteCategoryForm" action="" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Tambah Kategori Tiket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('admin.categories.create') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nama Kategori</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Harga</label>
+                        <input type="number" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quota" class="form-label">Kuota</label>
+                        <input type="number" class="form-control" id="quota" name="quota" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-success">Tambah Kategori</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Voucher Baru -->
+<div class="modal fade" id="createVoucherModal" tabindex="-1" aria-labelledby="createVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createVoucherModalLabel">Tambah Voucher Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('admin.vouchers.create') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="voucherCode" class="form-label">Kode Voucher</label>
+                        <input type="text" class="form-control" id="voucherCode" name="code" required 
+                            placeholder="Masukkan kode voucher (unik)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="discountAmount" class="form-label">Jumlah Diskon (Rp)</label>
+                        <input type="number" class="form-control" id="discountAmount" name="discount_amount" 
+                            required min="0" placeholder="Masukkan jumlah diskon">
+                    </div>
+                    <div class="mb-3">
+                        <label for="voucherQuota" class="form-label">Kuota Voucher</label>
+                        <input type="number" class="form-control" id="voucherQuota" name="quota" 
+                            required min="1" placeholder="Masukkan jumlah kuota voucher">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Voucher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Edit Voucher Modal -->
+<div class="modal fade" id="editVoucherModal" tabindex="-1" aria-labelledby="editVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVoucherModalLabel">Edit Voucher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editVoucherForm" action="" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editVoucherCode" class="form-label">Kode Voucher</label>
+                        <input type="text" class="form-control" id="editVoucherCode" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDiscountAmount" class="form-label">Jumlah Diskon (Rp)</label>
+                        <input type="number" class="form-control" id="editDiscountAmount" name="discount_amount" 
+                            required min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editVoucherQuota" class="form-label">Kuota Voucher</label>
+                        <input type="number" class="form-control" id="editVoucherQuota" name="quota" 
+                            required min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Voucher Modal -->
+<div class="modal fade" id="deleteVoucherModal" tabindex="-1" aria-labelledby="deleteVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteVoucherModalLabel">Hapus Voucher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus voucher "<strong id="deleteVoucherCode"></strong>"?</p>
+                <p class="text-danger">Perhatian: Voucher yang telah digunakan tidak dapat dihapus.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteVoucherForm" action="" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Modal -->
 <div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -312,54 +502,105 @@
 
 @section('scripts')
 <script>
-    document.getElementById('verificationModal').addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget; // Tombol yang diklik
-        var orderId = button.getAttribute('data-order-id'); // ID Pesanan
-        var userName = button.getAttribute('data-user-name');
-        var ticketCategory = button.getAttribute('data-ticket-category');
-        var addons = JSON.parse(button.getAttribute('data-addons')); // Parsing JSON untuk Add On
-        var paymentProof = button.getAttribute('data-payment-proof'); // URL bukti pembayaran
-
-        // Mengisi konten modal
-        document.getElementById('modalUserName').textContent = 'Nama Pengguna: ' + userName;
-        document.getElementById('modalTicketCategory').textContent = 'Kategori Tiket: ' + ticketCategory;
-
-        // Kosongkan list dan menambahkan Add-ons
-        var addonsList = document.getElementById('modalAddons');
-        addonsList.innerHTML = ''; // Kosongkan list sebelumnya
+$(document).ready(function() {
+    // Verification Modal
+    $('#verificationModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var orderId = button.data('order-id');
+        var userName = button.data('user-name');
+        var ticketCategory = button.data('ticket-category');
+        var addons = button.data('addons');
+        var paymentProof = button.data('payment-proof');
+        
+        var modal = $(this);
+        
+        modal.find('#modalUserName').text('Nama Pengguna: ' + userName);
+        modal.find('#modalTicketCategory').text('Kategori Tiket: ' + ticketCategory);
+        
+        var addonsList = modal.find('#modalAddons');
+        addonsList.empty();
+        
         try {
             if (addons && addons.length > 0) {
-                addons.forEach(function (addon) {
-                    var li = document.createElement('li');
-                    li.textContent = addon.name + ' - ' + addon.price;
-                    addonsList.appendChild(li);
+                $.each(addons, function(index, addon) {
+                    addonsList.append('<li>' + addon.name + ' - ' + addon.price + '</li>');
                 });
             } else {
-                var li = document.createElement('li');
-                li.textContent = 'Tidak ada add-on';
-                addonsList.appendChild(li);
+                addonsList.append('<li>Tidak ada add-on</li>');
             }
         } catch (error) {
             console.error("Error menampilkan add-ons:", error);
-            var li = document.createElement('li');
-            li.textContent = 'Error menampilkan add-on';
-            addonsList.appendChild(li);
+            addonsList.append('<li>Error menampilkan add-on</li>');
         }
-
-        // Set bukti pembayaran
-        document.getElementById('paymentProof').src = paymentProof;
         
-        // Set URL untuk form action
+        modal.find('#paymentProof').attr('src', paymentProof);
+        
         var verifyUrl = "{{ route('admin.orders.verify', ['orderId' => ':orderId']) }}".replace(':orderId', orderId);
         var rejectUrl = "{{ route('admin.orders.reject', ['orderId' => ':orderId']) }}".replace(':orderId', orderId);
         
-        // Set form action untuk verifikasi dan tolak pembayaran
-        document.getElementById('verifyForm').action = verifyUrl;
-        document.getElementById('rejectForm').action = rejectUrl;
+        modal.find('#verifyForm').attr('action', verifyUrl);
+        modal.find('#rejectForm').attr('action', rejectUrl);
         
-        // Set input order_id untuk form
-        document.getElementById('order_id').value = orderId;
-        document.getElementById('reject_order_id').value = orderId;
+        modal.find('#order_id').val(orderId);
+        modal.find('#reject_order_id').val(orderId);
     });
+    
+    // Edit Category Button Click
+    $('.edit-category-btn').on('click', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var price = $(this).data('price');
+        var quota = $(this).data('quota');
+        var description = $(this).data('description');
+        
+        var editUrl = "{{ route('admin.categories.update', ':id') }}".replace(':id', id);
+        
+        $('#editCategoryForm').attr('action', editUrl);
+        $('#editName').val(name);
+        $('#editPrice').val(price);
+        $('#editQuota').val(quota);
+        $('#editDescription').val(description);
+    });
+    
+    // Delete Category Button Click
+    $('.delete-category-btn').on('click', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        
+        var deleteUrl = "{{ route('admin.categories.delete', ':id') }}".replace(':id', id);
+        
+        $('#deleteCategoryForm').attr('action', deleteUrl);
+        $('#deleteCategoryName').text(name);
+    });
+    
+    // Reset forms when modals are closed
+    $('.modal').on('hidden.bs.modal', function () {
+        $(this).find('form').trigger('reset');
+        });
+        $('.edit-voucher-btn').on('click', function() {
+        var id = $(this).data('id');
+        var code = $(this).data('code');
+        var discount = $(this).data('discount');
+        var quota = $(this).data('quota');
+        
+        var editUrl = "{{ route('admin.vouchers.update', ':id') }}".replace(':id', id);
+        
+        $('#editVoucherForm').attr('action', editUrl);
+        $('#editVoucherCode').val(code);
+        $('#editDiscountAmount').val(discount);
+        $('#editVoucherQuota').val(quota);
+    });
+
+    // Delete Voucher Button Click
+    $('.delete-voucher-btn').on('click', function() {
+        var id = $(this).data('id');
+        var code = $(this).data('code');
+        
+        var deleteUrl = "{{ route('admin.vouchers.delete', ':id') }}".replace(':id', id);
+        
+        $('#deleteVoucherForm').attr('action', deleteUrl);
+        $('#deleteVoucherCode').text(code);
+    });
+});
 </script>
 @endsection

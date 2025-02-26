@@ -33,57 +33,55 @@ class AdminController extends Controller
         return redirect()->back()->with('error', 'Kunci rahasia tidak valid.');
     }
     
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         if (!session('admin_authenticated')) {
             return redirect()->route('admin.login');
         }
 
-        // Ambil semua pesanan dengan relasi yang diperlukan
-        $orders = Order::with([
-            'user', 
-            'ticketCategory', 
-            'payment', 
-            'addOns', 
-            'orderVoucher.voucher'
-        ])->get();
-        // Ambil semua kategori tiket dan voucher
+        $query = Order::with([
+            'user', 'ticketCategory', 'payment', 'addOns', 'orderVoucher.voucher'
+        ]);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->has('ticketCategory')) {
+            $query->whereHas('ticketCategory', function ($q) use ($request) {
+                $q->where('name', $request->ticketCategory);
+            });
+        }
+
+        $orders = $query->paginate(10);
         $categories = TicketCategory::all();
         $vouchers = Voucher::all();
 
         return view('admin.dashboard', compact('orders', 'categories', 'vouchers'));
-    }
-
-    
+    }   
     public function verifyOrder($orderId)
     {
         if (!session('admin_authenticated')) {
             return redirect()->route('admin.login');
         }
 
-        // Memuat data pesanan beserta informasi pembayaran
         $order = Order::with(['user', 'payment'])->findOrFail($orderId);
         
-        // Pastikan status pesanan adalah 'pending'
         if ($order->status !== 'pending') {
             return redirect()->back()->with('error', 'Order tidak dapat diverifikasi.');
         }
         
-        // Periksa jika jumlah pembayaran adalah 0 (gratis), izinkan verifikasi meskipun tanpa bukti pembayaran
         if (!($order->payment->amount == 0 && !$order->payment->proof_image) && 
             (!$order->payment || !$order->payment->proof_image)) {
             return redirect()->back()->with('error', 'Order tidak dapat diverifikasi karena bukti pembayaran tidak ada.');
         }
 
-        // Mengubah status pesanan menjadi 'verified'
         $order->status = 'verified';
         $order->save();
 
-        // Mengubah status pembayaran menjadi 'verified'
         $order->payment->status = 'verified';
         $order->payment->save();
 
-        // Kirim tiket melalui email
         SendTicketEmail::dispatch($order);
 
         return redirect()->back()->with('success', 'Order berhasil diverifikasi dan tiket telah dikirim.');
@@ -95,23 +93,18 @@ class AdminController extends Controller
             return redirect()->route('admin.login');
         }
 
-        // Memuat data pesanan beserta informasi pembayaran
         $order = Order::with(['user', 'payment'])->findOrFail($orderId);
 
-        // Pastikan status pesanan adalah 'pending'
         if ($order->status !== 'pending') {
             return redirect()->back()->with('error', 'Order tidak dapat ditolak.');
         }
 
-        // Mengubah status pesanan menjadi 'rejected'
         $order->status = 'rejected';
         $order->save();
 
-        // Mengubah status pembayaran menjadi 'rejected'
         $order->payment->status = 'rejected';
         $order->payment->save();
 
-        // Kirim email penolakan pesanan
         Mail::to($order->user->email)->send(new OrderRejected($order));
 
         return redirect()->back()->with('success', 'Order berhasil ditolak dan email pemberitahuan telah dikirim.');
@@ -121,7 +114,7 @@ class AdminController extends Controller
     public function updateTicketCategory(Request $request, $categoryId)
     {
         if (!session('admin_authenticated')) {
-            return redirect()->route('admin.login');
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
         
         $validator = Validator::make($request->all(), [
@@ -132,15 +125,17 @@ class AdminController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
         
-        $category = TicketCategory::findOrFail($categoryId);
-        $category->update($request->all());
-        
-        return redirect()->back()->with('success', 'Kategori tiket berhasil diperbarui.');
+        try {
+            $category = TicketCategory::findOrFail($categoryId);
+            $category->update($request->all());
+            
+            return response()->json(['success' => true, 'message' => 'Kategori tiket berhasil diperbarui.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
     }
     
     public function createTicketCategory(Request $request)
@@ -188,5 +183,72 @@ class AdminController extends Controller
         Voucher::create($request->all());
         
         return redirect()->back()->with('success', 'Voucher baru berhasil dibuat.');
+    }
+    
+    // New method for updating vouchers
+    public function updateVoucher(Request $request, $voucherId)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('admin.login');
+        }
+        
+        $voucher = Voucher::findOrFail($voucherId);
+        
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:255|unique:vouchers,code,' . $voucherId,
+            'discount_amount' => 'required|numeric|min:0',
+            'quota' => 'required|integer|min:1',
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+        
+        $voucher->update($request->all());
+        
+        return redirect()->back()->with('success', 'Voucher berhasil diperbarui.');
+    }
+    
+    // New method for deleting vouchers
+    public function deleteVoucher($voucherId)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('admin.login');
+        }
+        
+        $voucher = Voucher::findOrFail($voucherId);
+        
+        // Check if the voucher has been used
+        $hasBeenUsed = $voucher->orderVouchers()->exists();
+        
+        if ($hasBeenUsed) {
+            return redirect()->back()->with('error', 'Voucher tidak dapat dihapus karena telah digunakan.');
+        }
+        
+        $voucher->delete();
+        
+        return redirect()->back()->with('success', 'Voucher berhasil dihapus.');
+    }
+    
+    public function deleteTicketCategory($categoryId)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('admin.login');
+        }
+        
+        $category = TicketCategory::findOrFail($categoryId);
+        
+        // Check if the category has associated orders
+        $hasOrders = $category->orders()->exists();
+        
+        if ($hasOrders) {
+            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena sudah memiliki pesanan terkait.');
+        }
+        
+        $category->delete();
+        
+        return redirect()->back()->with('success', 'Kategori tiket berhasil dihapus.');
     }
 }

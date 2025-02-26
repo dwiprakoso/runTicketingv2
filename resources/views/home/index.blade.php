@@ -14,8 +14,8 @@
                             Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, illo ipsa dolorem eligendi aut nam dolores, facilis possimus nemo, natus recusandae minus repellendus voluptates harum cumque sit libero fugit at. Labore asperiores magnam cum iusto exercitationem et atque neque facilis hic, voluptas obcaecati doloribus assumenda consequatur consectetur? Est nesciunt atque iste dicta hic magnam placeat illo asperiores sint. Esse tempora laboriosam commodi perferendis quae, iusto explicabo molestias aspernatur facilis officia voluptas nihil quas tempore blanditiis modi harum nisi quam, quos praesentium adipisci id, culpa nulla saepe. Blanditiis assumenda mollitia porro aliquam ipsum et vero cum, culpa exercitationem ipsa facilis maiores!
                         </p>
                         <p class="card-text">
-                            <i class="fas fa-calendar-alt me-2"></i> Tanggal: To Be Announced<br>
-                            <i class="fas fa-map-marker-alt me-2"></i> Lokasi: To Be Announced
+                            <i class="fas fa-calendar-alt me-2"></i> Tanggal: 15 Juni 2025<br>
+                            <i class="fas fa-map-marker-alt me-2"></i> Lokasi: Lakers BSB City, Semarang
                         </p>
                     </div>
                     <div class="col-md-4">
