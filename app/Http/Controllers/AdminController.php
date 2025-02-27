@@ -114,7 +114,7 @@ class AdminController extends Controller
     public function updateTicketCategory(Request $request, $categoryId)
     {
         if (!session('admin_authenticated')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return redirect()->route('admin.login')->with('error', 'Unauthorized');
         }
         
         $validator = Validator::make($request->all(), [
@@ -125,16 +125,16 @@ class AdminController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
         
         try {
             $category = TicketCategory::findOrFail($categoryId);
             $category->update($request->all());
             
-            return response()->json(['success' => true, 'message' => 'Kategori tiket berhasil diperbarui.']);
+            return redirect()->route('admin.dashboard')->with('success', 'Kategori tiket berhasil diperbarui.');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
     
