@@ -15,6 +15,7 @@ class User extends Authenticatable
         'last_name',
         'gender',
         'tgl_lahir',
+        'tgl_lahir_anak',
         'email',
         'no_hp',
         'nik',

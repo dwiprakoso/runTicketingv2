@@ -29,7 +29,19 @@
                             @enderror
                         </div>
                     </div>
-
+                    @if($category->name === 'Umum')
+                        <div class="mb-3">
+                            <label for="jarak_lari" class="form-label">Jarak Lari</label>
+                            <select name="jarak_lari" id="jarak_lari" class="form-control">
+                                <option value=""><-- Select Option --></option>
+                                <option value="3K">3K</option>
+                                <option value="7K">7K</option>
+                            </select>
+                            @error('jarak_lari')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     <div class="mb-3">
                         <label for="gender" class="form-label">Gender</label>
                         <select name="gender" id="gender" class="form-control @error('gender') is-invalid @enderror">
@@ -41,7 +53,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
+                    @if($category->name === 'Umum' || $category->name === 'Family Run')
                     <div class="mb-3">
                         <label for="tgl_lahir" class="form-label">Tanggal Lahir</label>
                         <input type="date" class="form-control @error('tgl_lahir') is-invalid @enderror" id="tgl_lahir" name="tgl_lahir" value="{{ old('tgl_lahir') }}" required>
@@ -49,6 +61,16 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    @endif
+                    @if($category->name === 'Kids 3K')
+                        <div class="mb-3">
+                            <label for="tgl_lahir_anak" class="form-label">Tanggal Lahir</label>
+                            <input type="date" class="form-control @error('tgl_lahir_anak') is-invalid @enderror" id="tgl_lahir_anak" name="tgl_lahir_anak" value="{{ old('tgl_lahir_anak') }}" required>
+                            @error('tgl_lahir_anak')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required>
@@ -137,21 +159,8 @@
                     </div>
 
                     {{-- Form Tambahan Berdasarkan Kategori --}}
-                    {{-- Umum --}}
-                    @if($category->name === 'Umum')
-                        <div class="mb-3">
-                            <label for="jarak_lari" class="form-label">Jarak Lari</label>
-                            <select name="jarak_lari" id="jarak_lari" class="form-control">
-                                <option value=""><-- Select Option --></option>
-                                <option value="3K">3K</option>
-                                <option value="7K">7K</option>
-                            </select>
-                            @error('jarak_lari')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
                     {{-- Family Run --}}
-                    @elseif($category->name === 'Family Run')
+                    @if($category->name === 'Family Run')
                         <div class="mb-3">
                             <label for="nama_anak" class="form-label">Nama Anak</label>
                             <input type="text" class="form-control @error('nama_anak') is-invalid @enderror" id="nama_anak" name="nama_anak" value="{{ old('nama_anak') }}" required>
@@ -283,7 +292,24 @@
 @section('scripts')
 <script>
     const basePrice = {{ $category->price }};
-    
+    // validate usia anak
+    document.addEventListener('DOMContentLoaded', function() {
+        var today = new Date(); // Get today's date
+        
+        // Maximum date (children must be at least 0 years old - use today)
+        var maxDate = new Date();
+        
+        // Minimum date (children must be at most 12 years old)
+        var minDate = new Date();
+        minDate.setFullYear(today.getFullYear() - 12);
+        
+        var dateInput = document.getElementById('tgl_lahir_anak');
+        
+        // Set max and min date attributes (swap them!)
+        dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+        dateInput.setAttribute('min', minDate.toISOString().split('T')[0]);
+    });
+
     // Format number
     function numberFormat(number) {
         return new Intl.NumberFormat('id-ID').format(number);
@@ -315,7 +341,14 @@
         // Fill verification modal - Informasi Peserta
         $('#verify-nama').text($('#first_name').val() + ' ' + $('#last_name').val());
         $('#verify-gender').text(getGenderText($('#gender').val()));
-        $('#verify-tgl-lahir').text(formatDate($('#tgl_lahir').val()));
+        
+        // Check which date field to use based on category
+        @if($category->name === 'Kids 3K')
+            $('#verify-tgl-lahir').text(formatDate($('#tgl_lahir_anak').val()));
+        @else
+            $('#verify-tgl-lahir').text(formatDate($('#tgl_lahir').val()));
+        @endif
+        
         $('#verify-email').text($('#email').val());
         $('#verify-no-hp').text($('#no_hp').val());
         $('#verify-nik').text($('#nik').val());
@@ -347,7 +380,11 @@
     });
 
     // Submit Order
-    $('#submitOrderBtn').click(function() {
+    $('#submitOrderBtn').click(function(e) {
+        e.preventDefault(); // Prevent double submission
+        
+        console.log('Form submission triggered');
+        
         // Submit the form
         $('#orderForm').submit();
     });
