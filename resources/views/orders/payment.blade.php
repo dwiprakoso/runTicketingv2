@@ -24,7 +24,7 @@
                         <p>
                             <strong>Kategori:</strong> {{ $order->ticketCategory->name }}<br>
                             <strong>Harga Dasar:</strong> Rp {{ number_format($order->ticketCategory->price, 0, ',', '.') }}<br>
-                            <strong>Order ID:</strong> #{{ $order->id }}
+                            <strong>Order ID:</strong> #{{ $order->order_number }}
                         </p>
                     </div>
                 </div>

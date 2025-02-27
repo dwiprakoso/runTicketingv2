@@ -15,7 +15,7 @@
                 </p>
                 
                 <div class="alert alert-info">
-                    <h5>Order ID: #{{ $order->id }}</h5>
+                    <h5>Order ID: #{{ $order->order_number }}</h5>
                     <p class="mb-0">Kategori: {{ $order->ticketCategory->name }}</p>
                 </div>
                 

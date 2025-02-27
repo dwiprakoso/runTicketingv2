@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="no_hp" class="form-label">Nomor HP</label>
+                        <label for="no_hp" class="form-label">Nomor Whatsapp</label>
                         <input type="text" class="form-control @error('no_hp') is-invalid @enderror" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required>
                         @error('no_hp')
                             <div class="invalid-feedback">{{ $message }}</div>

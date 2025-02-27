@@ -38,160 +38,187 @@ class OrderController extends Controller
     }
     
     public function store(Request $request)
-{
-    // Get the category first to use its name
-    $category = TicketCategory::findOrFail($request->ticket_category_id);
-    
-    // Base validation rules
-    $rules = [
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'no_hp' => 'required|string|max:20',
-        'gender' => 'required|string|in:laki-laki,perempuan',
-        'nik' => 'required|string',
-        'gol_darah' => 'required|string|in:A,B,AB,O',
-        'alamat' => 'required|string',
-        'size_chart' => 'required|string|in:S,M,L,XL,XXL',
-        'bib_name' => 'required|string|max:255',
-        'komunitas' => 'nullable|string|max:255',
-        'kontak_darurat_name' => 'required|string|max:255',
-        'kontak_darurat_no' => 'required|string|max:20',
-        'ticket_category_id' => 'required|exists:ticket_categories,id',
-    ];
-    
-    // Add category-specific validation rules
-    if ($category->name === 'Umum' || $category->name === 'Family Run') {
-        $rules['tgl_lahir'] = 'required|date';
-    }
-    
-    if ($category->name === 'Kids 3K') {
-        $rules['tgl_lahir_anak'] = ['required', 'date', function ($attribute, $value, $fail) {
-            $birthdate = Carbon::parse($value);
-            $maxAgeDate = Carbon::now()->subYears(12); // Maksimal usia 12 tahun
-            $minAgeDate = Carbon::now(); // Minimal usia 0 tahun
-            
-            if ($birthdate->lt($maxAgeDate)) {
-                $fail('Usia anak maksimal adalah 12 tahun.');
-            }
-            
-            if ($birthdate->gt($minAgeDate)) {
-                $fail('Tanggal lahir tidak boleh di masa depan.');
-            }
-        }];
-    }
-    
-    if ($category->name === 'Umum') {
-        $rules['jarak_lari'] = 'required|string|in:3K,7K';
-    }
-    
-    if ($category->name === 'Family Run') {
-        $rules['nama_anak'] = 'required|string|max:255';
-        $rules['usia_anak'] = 'required|string';
-        $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
-        $rules['bib_anak'] = 'required|string|max:255';
-    }
-    
-    // Run validation
-    $validator = Validator::make($request->all(), $rules);
-    
-    if ($validator->fails()) {
-        return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
-    }
-    
-    // Check if category has available quota
-    if ($category->availableQuota() <= 0) {
-        return redirect()->route('home')->with('error', 'Tiket untuk kategori ini telah habis.');
-    }
-    
-    try {
-        DB::beginTransaction();
+    {
+        // Get the category first to use its name
+        $category = TicketCategory::findOrFail($request->ticket_category_id);
         
-        // Create or update user
-        // Prepare user data based on category
-        $userData = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'gender' => $request->gender,
-            'no_hp' => $request->no_hp,
-            'nik' => $request->nik,
-            'gol_darah' => $request->gol_darah,
-            'alamat' => $request->alamat,
-            'komunitas' => $request->komunitas,
-            'kontak_darurat_name' => $request->kontak_darurat_name,
-            'kontak_darurat_no' => $request->kontak_darurat_no,
+        // Base validation rules - kode validasi tetap sama
+        $rules = [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'no_hp' => 'required|string|max:20',
+            'gender' => 'required|string|in:laki-laki,perempuan',
+            'nik' => 'required|string',
+            'gol_darah' => 'required|string|in:A,B,AB,O',
+            'alamat' => 'required|string',
+            'size_chart' => 'required|string|in:S,M,L,XL,XXL',
+            'bib_name' => 'required|string|max:255',
+            'komunitas' => 'nullable|string|max:255',
+            'kontak_darurat_name' => 'required|string|max:255',
+            'kontak_darurat_no' => 'required|string|max:20',
+            'ticket_category_id' => 'required|exists:ticket_categories,id',
         ];
         
-        // Add the appropriate date of birth field based on category
+        // Tambahkan aturan validasi berdasarkan kategori - kode validasi tetap sama
         if ($category->name === 'Umum' || $category->name === 'Family Run') {
-            $userData['tgl_lahir'] = $request->tgl_lahir;
-        } elseif ($category->name === 'Kids 3K') {
-            $userData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
+            $rules['tgl_lahir'] = 'required|date';
         }
         
-        // Find existing user or create new one
-        $user = User::firstOrCreate(
-            ['email' => $request->email],
-            $userData
-        );
+        if ($category->name === 'Kids 3K') {
+            $rules['tgl_lahir_anak'] = ['required', 'date', function ($attribute, $value, $fail) {
+                $birthdate = Carbon::parse($value);
+                $maxAgeDate = Carbon::now()->subYears(12); // Maksimal usia 12 tahun
+                $minAgeDate = Carbon::now(); // Minimal usia 0 tahun
+                
+                if ($birthdate->lt($maxAgeDate)) {
+                    $fail('Usia anak maksimal adalah 12 tahun.');
+                }
+                
+                if ($birthdate->gt($minAgeDate)) {
+                    $fail('Tanggal lahir tidak boleh di masa depan.');
+                }
+            }];
+        }
         
-        $totalPrice = $category->price;
-        $paymentDeadline = Carbon::now()->addHour();
-        
-        // Create the order
-        $orderData = [
-            'user_id' => $user->id,
-            'ticket_category_id' => $category->id,
-            'total_price' => $totalPrice,
-            'status' => 'pending',
-            'payment_deadline' => $paymentDeadline,
-            'size_chart' => $request->size_chart,
-            'bib_name' => $request->bib_name,
-        ];
-        
-        // Add category-specific fields
         if ($category->name === 'Umum') {
-            $orderData['jarak_lari'] = $request->jarak_lari;
-        } elseif ($category->name === 'Family Run') {
-            $orderData['nama_anak'] = $request->nama_anak;
-            $orderData['usia_anak'] = $request->usia_anak;
-            $orderData['size_anak'] = $request->size_anak;
-            $orderData['bib_anak'] = $request->bib_anak;
+            $rules['jarak_lari'] = 'required|string|in:3K,7K';
         }
         
-        $order = Order::create($orderData);
-        
-        Log::info('Order created with ID: ' . $order->id);
-        
-        if (!$order->id) {
-            throw new \Exception('Order ID is null after creation');
+        if ($category->name === 'Family Run') {
+            $rules['nama_anak'] = 'required|string|max:255';
+            $rules['usia_anak'] = 'required|string';
+            $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
+            $rules['bib_anak'] = 'required|string|max:255';
         }
         
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'status' => 'pending',
-            'amount' => $totalPrice,
-        ]);
+        // Run validation
+        $validator = Validator::make($request->all(), $rules);
         
-        Log::info('Payment created with ID: ' . $payment->id . ' for order: ' . $order->id);
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
         
-        DB::commit();
+        // Check if category has available quota
+        if ($category->availableQuota() <= 0) {
+            return redirect()->route('home')->with('error', 'Tiket untuk kategori ini telah habis.');
+        }
         
-        // Dispatch jobs for reminders and expiration
-        SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(30));
-        ExpireOrderJob::dispatch($order)->delay($paymentDeadline);
-        
-        return redirect()->route('orders.payment', $order->id);
-        
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Order creation failed: ' . $e->getMessage());
-        Log::error($e->getTraceAsString());
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        try {
+            DB::beginTransaction();
+            
+            // PERUBAHAN: Selalu buat user baru, tanpa pengecekan email yang sama
+            $user = new User;
+            $user->email = $request->email;
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->no_hp = $request->no_hp;
+            $user->nik = $request->nik;
+            $user->gender = $request->gender;
+            
+            // Handle tanggal lahir sesuai kategori
+            if ($category->name === 'Umum' || $category->name === 'Family Run') {
+                $user->tgl_lahir = $request->tgl_lahir;
+            } elseif ($category->name === 'Kids 3K') {
+                $user->tgl_lahir = $request->tgl_lahir_anak;
+            }
+            
+            $user->gol_darah = $request->gol_darah;
+            $user->alamat = $request->alamat;
+            $user->komunitas = $request->komunitas;
+            $user->kontak_darurat_name = $request->kontak_darurat_name;
+            $user->kontak_darurat_no = $request->kontak_darurat_no;
+            $user->save();
+            
+            $totalPrice = $category->price;
+            $paymentDeadline = Carbon::now()->addHour();
+            
+            // Generate order number
+            $today = Carbon::now()->format('Ymd');
+            $prefix = 'RUN-' . $today . '-';
+            
+            // Gunakan Cache untuk atomic operations
+            $orderNumber = Cache::lock('order_number_lock', 10)->get(function () use ($prefix) {
+                $lastOrder = Order::where('order_number', 'like', $prefix . '%')
+                    ->orderBy('id', 'desc')
+                    ->first();
+                    
+                if ($lastOrder) {
+                    $lastNumber = substr($lastOrder->order_number, strlen($prefix));
+                    $newNumber = (int)$lastNumber + 1;
+                    return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+                }
+                
+                return $prefix . '0001';
+            });
+            
+            // Buat order baru dengan semua data dari request dan order number
+            $orderData = [
+                'user_id' => $user->id,
+                'ticket_category_id' => $category->id,
+                'order_number' => $orderNumber, // Tambahkan order number
+                'total_price' => $totalPrice,
+                'status' => 'pending',
+                'payment_deadline' => $paymentDeadline,
+                'size_chart' => $request->size_chart,
+                'bib_name' => $request->bib_name,
+                // Data yang sebelumnya disimpan di user, sekarang disimpan per order
+                'gender' => $request->gender,
+                'nik' => $request->nik,
+                'gol_darah' => $request->gol_darah,
+                'alamat' => $request->alamat,
+                'komunitas' => $request->komunitas,
+                'kontak_darurat_name' => $request->kontak_darurat_name,
+                'kontak_darurat_no' => $request->kontak_darurat_no
+            ];
+            
+            // Tambahkan field spesifik kategori
+            if ($category->name === 'Umum') {
+                $orderData['jarak_lari'] = $request->jarak_lari;
+                $orderData['tgl_lahir'] = $request->tgl_lahir;
+            } elseif ($category->name === 'Family Run') {
+                $orderData['nama_anak'] = $request->nama_anak;
+                $orderData['usia_anak'] = $request->usia_anak;
+                $orderData['size_anak'] = $request->size_anak;
+                $orderData['bib_anak'] = $request->bib_anak;
+                $orderData['tgl_lahir'] = $request->tgl_lahir;
+            } elseif ($category->name === 'Kids 3K') {
+                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
+            }
+            
+            $order = Order::create($orderData);
+            
+            Log::info('Order created with ID: ' . $order->id . ' and Order Number: ' . $orderNumber);
+            
+            if (!$order->id) {
+                throw new \Exception('Order ID is null after creation');
+            }
+            
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'status' => 'pending',
+                'amount' => $totalPrice,
+            ]);
+            
+            Log::info('Payment created with ID: ' . $payment->id . ' for order: ' . $order->id);
+            
+            DB::commit();
+            
+            // Dispatch jobs for reminders and expiration
+            SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(30));
+            ExpireOrderJob::dispatch($order)->delay($paymentDeadline);
+            
+            return redirect()->route('orders.payment', $order->id);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Order creation failed: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        }
     }
-}
     
     public function showPayment($orderId)
     {

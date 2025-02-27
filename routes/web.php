@@ -22,7 +22,8 @@ Route::get('/orders/{orderId}/payment', [OrderController::class, 'showPayment'])
 Route::post('/orders/{orderId}/voucher', [OrderController::class, 'applyVoucher'])->name('orders.apply-voucher');
 Route::post('/orders/{orderId}/payment', [OrderController::class, 'uploadPaymentProof'])->name('orders.upload-payment');
 Route::get('/orders/{orderId}/success', [OrderController::class, 'showSuccess'])->name('orders.success');
-
+// Add this to your routes/web.php file
+Route::post('/check-order', [App\Http\Controllers\HomeController::class, 'checkOrder'])->name('check.order');
 // Admin Routes
 Route::get('/admin/login', [AdminController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.post');

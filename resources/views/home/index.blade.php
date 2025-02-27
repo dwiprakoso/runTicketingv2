@@ -27,6 +27,40 @@
     </div>
 </div>
 
+<!-- Order Check Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Cek Status Pemesanan</h4>
+            </div>
+            <div class="card-body">
+                @if(session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
+                
+                <form action="{{ route('check.order') }}" method="POST">
+                    @csrf
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="order_number" class="form-control" placeholder="Masukkan nomor pesanan Anda (contoh: RUN-20250227-0001)" required>
+                            </div>
+                            <small class="form-text text-muted">Masukkan nomor pesanan yang Anda dapatkan saat mendaftar</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">Cek Pesanan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h3 class="mb-4">Pilih Kategori Tiket</h3>
 
 <div class="row">
@@ -37,7 +71,7 @@
                 <h5 class="card-title">{{ $category->name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">Rp {{ number_format($category->price, 0, ',', '.') }}</h6>
                 <p class="card-text">{{ $category->description ?? 'Nikmati event dengan tiket kategori ini.' }}</p>
-                {{-- <p class="mb-3"><span class="badge bg-info">Sisa Kuota: {{ $category->availableQuota() }}</span></p> --}}
+                <p class="mb-3"><span class="badge bg-info">Sisa Kuota: {{ $category->availableQuota() }}</span></p>
                 
                 @if($category->availableQuota() > 0)
                     <a href="{{ route('orders.create', $category->id) }}" class="btn btn-primary">Pesan Sekarang</a>

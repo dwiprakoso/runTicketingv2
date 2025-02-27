@@ -56,9 +56,63 @@ class AdminController extends Controller
         $orders = $query->paginate(10);
         $categories = TicketCategory::all();
         $vouchers = Voucher::all();
+        
+        // Calculate statistics for dashboard cards
+        $categoryStats = [];
+        foreach ($categories as $category) {
+            $count = Order::whereHas('ticketCategory', function($q) use ($category) {
+                $q->where('id', $category->id);
+            })->count();
+            $categoryStats[$category->name] = $count;
+        }
+        
+        $genderStats = [
+            'Laki-laki' => Order::whereHas('user', function($q) {
+                $q->where('gender', 'laki-laki');
+            })->count(),
+            'Perempuan' => Order::whereHas('user', function($q) {
+                $q->where('gender', 'perempuan');
+            })->count()
+        ];
+        
+        // Add "Other" category if needed
+        $otherGenderCount = Order::whereHas('user', function($q) {
+            $q->whereNotIn('gender', ['laki-laki', 'perempuan']);
+        })->count();
+        
+        if ($otherGenderCount > 0) {
+            $genderStats['Lainnya'] = $otherGenderCount;
+        }
+        
+        // Calculate shirt size statistics
+        $sizesArr = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+        $sizeStats = [];
+        
+        foreach ($sizesArr as $size) {
+            $count = Order::where('size_chart', $size)->count();
+            if ($count > 0) {
+                $sizeStats[$size] = $count;
+            }
+        }
+        
+        // Check for any other sizes not in the predefined list
+        $otherSizesCount = Order::whereNotIn('size_chart', $sizesArr)
+            ->whereNotNull('size_chart')
+            ->count();
+            
+        if ($otherSizesCount > 0) {
+            $sizeStats['Lainnya'] = $otherSizesCount;
+        }
 
-        return view('admin.dashboard', compact('orders', 'categories', 'vouchers'));
-    }   
+        return view('admin.dashboard', compact(
+            'orders', 
+            'categories', 
+            'vouchers', 
+            'categoryStats', 
+            'genderStats', 
+            'sizeStats'
+        ));
+    }
     public function verifyOrder($orderId)
     {
         if (!session('admin_authenticated')) {

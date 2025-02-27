@@ -5,7 +5,126 @@
 @section('content')
 <div class="container mt-4">
     <h2 class="mb-4">Dashboard Admin</h2>
-
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <!-- Orders by Ticket Category Card -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Pesanan per Kategori</h5>
+                </div>
+                <div class="card-body">
+                    @if(empty($categoryStats))
+                        <p>Tidak ada data</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Kategori</th>
+                                        <th class="text-end">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($categoryStats as $category => $count)
+                                        <tr>
+                                            <td>{{ $category ?? 'Tidak ada kategori' }}</td>
+                                            <td class="text-end">{{ $count }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td class="text-end">{{ array_sum($categoryStats) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders by Gender Card -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Pesanan per Gender</h5>
+                </div>
+                <div class="card-body">
+                    @if(empty($genderStats))
+                        <p>Tidak ada data</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Gender</th>
+                                        <th class="text-end">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($genderStats as $gender => $count)
+                                        <tr>
+                                            <td>{{ $gender }}</td>
+                                            <td class="text-end">{{ $count }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td class="text-end">{{ array_sum($genderStats) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders by Shirt Size Card -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Pesanan per Ukuran Baju</h5>
+                </div>
+                <div class="card-body">
+                    @if(empty($sizeStats))
+                        <p>Tidak ada data</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Ukuran</th>
+                                        <th class="text-end">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($sizeStats as $size => $count)
+                                        <tr>
+                                            <td>{{ $size }}</td>
+                                            <td class="text-end">{{ $count }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td class="text-end">{{ array_sum($sizeStats) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-12">
             <div class="card">
@@ -24,7 +143,8 @@
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>No</th>
+                                        <th>ID Pesanan</th>
                                         <th>Nama Lengkap</th>
                                         <th>Email</th>
                                         <th>No. HP</th>
@@ -55,6 +175,7 @@
                                     @foreach($orders as $order)
                                         <tr>
                                             <td>{{ $order->id }}</td>
+                                            <td>{{ $order->order_number }}</td>
                                             <td>{{ $order->user->first_name }} {{ $order->user->last_name }}</td>
                                             <td>{{ $order->user->email }}</td>
                                             <td>{{ $order->user->no_hp }}</td>

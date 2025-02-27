@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->enum('gender', ['laki-laki', 'perempuan']);
             $table->date('tgl_lahir'); // Birth date
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('no_hp'); // Phone number
             $table->string('nik'); // National ID
             $table->enum('gol_darah', ['A', 'B', 'AB', 'O']); // Blood type
