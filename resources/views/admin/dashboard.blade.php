@@ -501,6 +501,16 @@
                         <input type="number" class="form-control" id="voucherQuota" name="quota" 
                             required min="1" placeholder="Masukkan jumlah kuota voucher">
                     </div>
+                    <div class="mb-3">
+                        <label for="ticketCategory" class="form-label">Kategori Tiket</label>
+                        <select class="form-select" id="ticketCategory" name="ticket_category_id" required>
+                            <option value="">-- Pilih Kategori Tiket --</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Voucher hanya berlaku untuk kategori tiket yang dipilih</small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -534,6 +544,16 @@
                         <label for="editVoucherQuota" class="form-label">Kuota Voucher</label>
                         <input type="number" class="form-control" id="editVoucherQuota" name="quota" 
                             required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTicketCategory" class="form-label">Kategori Tiket</label>
+                        <select class="form-select" id="editTicketCategory" name="ticket_category_id" required>
+                            <option value="">-- Pilih Kategori Tiket --</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Voucher hanya berlaku untuk kategori tiket yang dipilih</small>
                     </div>
                 </div>
                 <div class="modal-footer">

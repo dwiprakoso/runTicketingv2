@@ -19,7 +19,7 @@
                         </p>
                     </div>
                     <div class="col-md-4">
-                        <img src="{{ asset('img/banner.jpg') }}" alt="Event Banner" class="img-fluid rounded">
+                        <img src="{{ asset('img/banner-1.jpg') }}" alt="Event Banner" class="img-fluid rounded">
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                 <h5 class="card-title">{{ $category->name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">Rp {{ number_format($category->price, 0, ',', '.') }}</h6>
                 <p class="card-text">{{ $category->description ?? 'Nikmati event dengan tiket kategori ini.' }}</p>
-                <p class="mb-3"><span class="badge bg-info">Sisa Kuota: {{ $category->availableQuota() }}</span></p>
+                {{-- <p class="mb-3"><span class="badge bg-info">Sisa Kuota: {{ $category->availableQuota() }}</span></p> --}}
                 
                 @if($category->availableQuota() > 0)
                     <a href="{{ route('orders.create', $category->id) }}" class="btn btn-primary">Pesan Sekarang</a>

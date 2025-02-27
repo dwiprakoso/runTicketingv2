@@ -226,6 +226,7 @@ class AdminController extends Controller
             'code' => 'required|string|max:255|unique:vouchers',
             'discount_amount' => 'required|numeric|min:0',
             'quota' => 'required|integer|min:1',
+            'ticket_category_id' => 'required|exists:ticket_categories,id',
         ]);
         
         if ($validator->fails()) {

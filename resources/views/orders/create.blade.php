@@ -29,7 +29,7 @@
                             @enderror
                         </div>
                     </div>
-                    @if($category->name === 'Umum')
+                    @if($category->name === 'Fun Run')
                         <div class="mb-3">
                             <label for="jarak_lari" class="form-label">Jarak Lari</label>
                             <select name="jarak_lari" id="jarak_lari" class="form-control">
@@ -53,7 +53,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    @if($category->name === 'Umum' || $category->name === 'Family Run')
+                    @if($category->name === 'Fun Run' || $category->name === 'Family Run'|| $category->name === 'Early Bird - Fun Run 7K')
                     <div class="mb-3">
                         <label for="tgl_lahir" class="form-label">Tanggal Lahir</label>
                         <input type="date" class="form-control @error('tgl_lahir') is-invalid @enderror" id="tgl_lahir" name="tgl_lahir" value="{{ old('tgl_lahir') }}" required>
@@ -245,9 +245,9 @@
                     <p><strong>Nomor:</strong> <span id="verify-kontak-darurat-no"></span></p>
                 </div>
 
-                <!-- Informasi Kategori Umum -->
-                @if($category->name === 'Umum')
-                <div class="mb-3" id="kategori-umum-section">
+                <!-- Informasi Kategori Fun Run -->
+                @if($category->name === 'Fun Run')
+                <div class="mb-3" id="kategori-Fun Run-section">
                     <h5 class="border-bottom pb-2">Informasi Kategori {{ $category->name }}</h5>
                     <p><strong>Jarak Lari:</strong> <span id="verify-jarak-lari"></span></p>
                 </div>
@@ -362,8 +362,8 @@
         $('#verify-kontak-darurat-name').text($('#kontak_darurat_name').val());
         $('#verify-kontak-darurat-no').text($('#kontak_darurat_no').val());
 
-        // Kategori spesifik - Umum
-        @if($category->name === 'Umum')
+        // Kategori spesifik - Fun Run
+        @if($category->name === 'Fun Run')
         $('#verify-jarak-lari').text($('#jarak_lari').val());
         @endif
 

@@ -61,7 +61,7 @@ class OrderController extends Controller
         ];
         
         // Tambahkan aturan validasi berdasarkan kategori - kode validasi tetap sama
-        if ($category->name === 'Umum' || $category->name === 'Family Run') {
+        if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
             $rules['tgl_lahir'] = 'required|date';
         }
         
@@ -81,7 +81,7 @@ class OrderController extends Controller
             }];
         }
         
-        if ($category->name === 'Umum') {
+        if ($category->name === 'Fun Run') {
             $rules['jarak_lari'] = 'required|string|in:3K,7K';
         }
         
@@ -119,7 +119,7 @@ class OrderController extends Controller
             $user->gender = $request->gender;
             
             // Handle tanggal lahir sesuai kategori
-            if ($category->name === 'Umum' || $category->name === 'Family Run') {
+            if ($category->name === 'Fun Run' || $category->name === 'Family Run'|| $category->name === 'Early Bird - Fun Run 7K') {
                 $user->tgl_lahir = $request->tgl_lahir;
             } elseif ($category->name === 'Kids 3K') {
                 $user->tgl_lahir = $request->tgl_lahir_anak;
@@ -175,7 +175,7 @@ class OrderController extends Controller
             ];
             
             // Tambahkan field spesifik kategori
-            if ($category->name === 'Umum') {
+            if ($category->name === 'Fun Run') {
                 $orderData['jarak_lari'] = $request->jarak_lari;
                 $orderData['tgl_lahir'] = $request->tgl_lahir;
             } elseif ($category->name === 'Family Run') {
@@ -186,6 +186,9 @@ class OrderController extends Controller
                 $orderData['tgl_lahir'] = $request->tgl_lahir;
             } elseif ($category->name === 'Kids 3K') {
                 $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
+            }
+            elseif ($category->name === 'Early Bird - Fun Run 7K') {
+                $orderData['tgl_lahir'] = $request->tgl_lahir;
             }
             
             $order = Order::create($orderData);
@@ -254,73 +257,79 @@ class OrderController extends Controller
     }
     
     public function applyVoucher(Request $request, $orderId)
-    {
-        $requestId = uniqid('voucher_');
-        Log::info("START apply voucher [{$requestId}] for order #{$orderId}");
-        
-        return DB::transaction(function () use ($request, $orderId, $requestId) {
-            try {
-                // Validasi voucher code
-                $request->validate([
-                    'voucher_code' => 'required|string|exists:vouchers,code',
-                ]);
-                
-                Log::info("Validated voucher [{$requestId}]");
-                
-                // Temukan order 
-                $order = Order::findOrFail($orderId);
-                
-                // Cek jika voucher sudah ada untuk order ini
-                $existingVoucher = OrderVoucher::where('order_id', $order->id)->first();
-                if ($existingVoucher) {
-                    Log::info("Voucher already applied [{$requestId}]");
-                    return redirect()->back()->with('info', 'Voucher sudah diterapkan pada order ini.');
-                }
-                
-                // Temukan voucher
-                $voucher = Voucher::where('code', $request->voucher_code)->first();
-                
-                if (!$voucher) {
-                    throw new \Exception('Voucher tidak ditemukan.');
-                }
-                
-                // Cek ketersediaan kuota
-                if ($voucher->availableQuota() <= 0) {
-                    throw new \Exception('Voucher telah habis.');
-                }
-                
-                Log::info("Creating order voucher [{$requestId}]");
-                
-                // Buat OrderVoucher (TIDAK PERLU MENGURANGI KUOTA SECARA MANUAL)
-                // Kuota akan dihitung dari relasi OrderVoucher di availableQuota()
-                OrderVoucher::create([
-                    'order_id' => $order->id,
-                    'voucher_id' => $voucher->id,
-                ]);
-                
-                // Update total harga
-                $newTotalPrice = max(0, $order->total_price - $voucher->discount_amount);
-                $order->total_price = $newTotalPrice;
-                $order->save();
-                
-                Log::info("Updated order price to {$newTotalPrice} [{$requestId}]");
-                
-                // Update pembayaran jika ada
-                if ($order->payment) {
-                    $order->payment->amount = $newTotalPrice;
-                    $order->payment->save();
-                    Log::info("Updated payment amount [{$requestId}]");
-                }
-                
-                Log::info("END apply voucher [{$requestId}]: SUCCESS");
-                return redirect()->back()->with('success', 'Voucher berhasil diterapkan.');
-                
-            } catch (\Exception $e) {
-                Log::error("ERROR apply voucher [{$requestId}]: " . $e->getMessage());
-                return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+{
+    $requestId = uniqid('voucher_');
+    Log::info("START apply voucher [{$requestId}] for order #{$orderId}");
+    
+    return DB::transaction(function () use ($request, $orderId, $requestId) {
+        try {
+            // Validasi voucher code
+            $request->validate([
+                'voucher_code' => 'required|string|exists:vouchers,code',
+            ]);
+            
+            Log::info("Validated voucher [{$requestId}]");
+            
+            // Temukan order 
+            $order = Order::findOrFail($orderId);
+            
+            // Cek jika voucher sudah ada untuk order ini
+            $existingVoucher = OrderVoucher::where('order_id', $order->id)->first();
+            if ($existingVoucher) {
+                Log::info("Voucher already applied [{$requestId}]");
+                return redirect()->back()->with('info', 'Voucher sudah diterapkan pada order ini.');
             }
-        });
-    }
+            
+            // Temukan voucher
+            $voucher = Voucher::where('code', $request->voucher_code)->first();
+            
+            if (!$voucher) {
+                throw new \Exception('Voucher tidak ditemukan.');
+            }
+            
+            // Cek ketersediaan kuota
+            if ($voucher->availableQuota() <= 0) {
+                throw new \Exception('Voucher telah habis.');
+            }
+            
+            // Cek apakah voucher berlaku untuk kategori tiket pesanan
+            if ($voucher->ticket_category_id != $order->ticketCategory->id) {
+                throw new \Exception('Voucher tidak dapat diterapkan pada kategori tiket ini.');
+            }
+            
+            Log::info("Creating order voucher [{$requestId}]");
+            
+            // Buat OrderVoucher (TIDAK PERLU MENGURANGI KUOTA SECARA MANUAL)
+            // Kuota akan dihitung dari relasi OrderVoucher di availableQuota()
+            OrderVoucher::create([
+                'order_id' => $order->id,
+                'voucher_id' => $voucher->id,
+            ]);
+            
+            // Update total harga
+            $newTotalPrice = max(0, $order->total_price - $voucher->discount_amount);
+            $order->total_price = $newTotalPrice;
+            $order->save();
+            
+            Log::info("Updated order price to {$newTotalPrice} [{$requestId}]");
+            
+            // Update pembayaran jika ada
+            if ($order->payment) {
+                $order->payment->amount = $newTotalPrice;
+                $order->payment->save();
+                Log::info("Updated payment amount [{$requestId}]");
+            }
+            
+            Log::info("END apply voucher [{$requestId}]: SUCCESS");
+            return redirect()->back()->with('success', 'Voucher berhasil diterapkan.');
+            
+        } catch (\Exception $e) {
+            Log::error("ERROR apply voucher [{$requestId}]: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    });
+}
+
 
 
 

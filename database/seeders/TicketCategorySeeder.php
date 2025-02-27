@@ -14,30 +14,10 @@ class TicketCategorySeeder extends Seeder
     public function run(): void
     {
         DB::table('ticket_categories')->insert([
-            [
-                'name' => 'Umum',
-                'price' => 250000.00,
-                'quota' => 50,
-                'description' => 'Tiket Umum dengan fasilitas eksklusif.',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'name' => 'Family Run',
-                'price' => 450000.00,
-                'quota' => 200,
-                'description' => 'Tiket Regular dengan akses standar.',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'name' => 'Kids',
-                'price' => 200000.00,
-                'quota' => 100,
-                'description' => 'Tiket khusus Early Bird dengan harga lebih murah.',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
+            ['name' => 'Fun Run', 'description' => 'Terdapat pilihan jarak 3K dan 7K', 'price' => 250000, 'quota' => 50],
+            ['name' => 'Family Run', 'description' => 'Berlari bersama keluarga (1 Dewasa & 1 Anak - Anak)', 'price' => 450000, 'quota' => 200],
+            ['name' => 'Kids 3K', 'description' => 'Daftarkan anak anda dengan maksimal usia 12 Tahun untuk berlari 3K', 'price' => 200000, 'quota' => 100],
+            ['name' => 'Early Bird - Fun Run 7K', 'description' => 'Early Bird', 'price' => 225000, 'quota' => 100],
         ]);
     }
 }
