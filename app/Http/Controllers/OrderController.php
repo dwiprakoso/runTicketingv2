@@ -87,7 +87,7 @@ class OrderController extends Controller
         
         if ($category->name === 'Family Run') {
             $rules['nama_anak'] = 'required|string|max:255';
-            $rules['usia_anak'] = 'required|string';
+            $rules['tgl_lahir_anak'] = 'required|string';
             $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
             $rules['bib_anak'] = 'required|string|max:255';
         }
@@ -180,7 +180,7 @@ class OrderController extends Controller
                 $orderData['tgl_lahir'] = $request->tgl_lahir;
             } elseif ($category->name === 'Family Run') {
                 $orderData['nama_anak'] = $request->nama_anak;
-                $orderData['usia_anak'] = $request->usia_anak;
+                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
                 $orderData['size_anak'] = $request->size_anak;
                 $orderData['bib_anak'] = $request->bib_anak;
                 $orderData['tgl_lahir'] = $request->tgl_lahir;

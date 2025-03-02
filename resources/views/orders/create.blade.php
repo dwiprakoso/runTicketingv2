@@ -13,6 +13,7 @@
                 <form action="{{ route('orders.store') }}" method="POST" id="orderForm">
                     @csrf
                     <input type="hidden" name="ticket_category_id" value="{{ $category->id }}">
+                    {{-- Nama --}}
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label for="first_name" class="form-label">Nama Depan</label>
@@ -29,6 +30,7 @@
                             @enderror
                         </div>
                     </div>
+                    {{-- Fun Run Jarak Lari --}}
                     @if($category->name === 'Fun Run')
                         <div class="mb-3">
                             <label for="jarak_lari" class="form-label">Jarak Lari</label>
@@ -42,6 +44,7 @@
                             @enderror
                         </div>
                     @endif
+                    {{-- Gender --}}
                     <div class="mb-3">
                         <label for="gender" class="form-label">Gender</label>
                         <select name="gender" id="gender" class="form-control @error('gender') is-invalid @enderror">
@@ -53,6 +56,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Tanggal Lahir Dewasa --}}
                     @if($category->name === 'Fun Run' || $category->name === 'Family Run'|| $category->name === 'Early Bird - Fun Run 7K')
                     <div class="mb-3">
                         <label for="tgl_lahir" class="form-label">Tanggal Lahir</label>
@@ -62,6 +66,7 @@
                         @enderror
                     </div>
                     @endif
+                    {{-- Tanggal Lahir Anak --}}
                     @if($category->name === 'Kids 3K')
                         <div class="mb-3">
                             <label for="tgl_lahir_anak" class="form-label">Tanggal Lahir</label>
@@ -71,6 +76,7 @@
                             @enderror
                         </div>
                     @endif
+                    {{-- Email --}}
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required>
@@ -78,7 +84,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
+                    {{-- No HP --}}
                     <div class="mb-3">
                         <label for="no_hp" class="form-label">Nomor Whatsapp</label>
                         <input type="text" class="form-control @error('no_hp') is-invalid @enderror" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required>
@@ -86,6 +92,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- NIK --}}
                     <div class="mb-3">
                         <label for="nik" class="form-label">NIK</label>
                         <input type="text" class="form-control @error('nik') is-invalid @enderror" id="nik" name="nik" value="{{ old('nik') }}" required>
@@ -93,6 +100,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Golongan Darah --}}
                     <div class="mb-3">
                         <label for="gol_darah" class="form-label">Golongan Darah</label>
                         <select name="gol_darah" id="gol_darah" class="form-control">
@@ -106,6 +114,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Alamat --}}
                     <div class="mb-3">
                         <label for="alamat" class="form-label">Alamat</label>
                         <input type="text" class="form-control @error('alamat') is-invalid @enderror" id="alamat" name="alamat" value="{{ old('alamat') }}" required>
@@ -113,6 +122,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Size Chart Dewasa --}}
                     <img src="{{ asset('img/sizeChart.jpg') }}"  width="80%" class="mb-3">
                     <div class="mb-3">
                         <label for="size_chart" class="form-label">Size Chart</label>
@@ -128,6 +138,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Nama BIB --}}
                     <div class="mb-3">
                         <label for="bib_name" class="form-label">Nama BIB</label>
                         <input type="text" class="form-control @error('bib_name') is-invalid @enderror" id="bib_name" name="bib_name" value="{{ old('bib_name') }}" required>
@@ -135,6 +146,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- Komunitas --}}
                     <div class="mb-3">
                         <label for="komunitas" class="form-label">Komunitas</label>
                         <input type="text" class="form-control @error('komunitas') is-invalid @enderror" id="komunitas" name="komunitas" value="{{ old('komunitas') }}">
@@ -142,7 +154,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
+                    {{-- Kontak Darurat --}}
                     <div class="mb-3">
                         <label for="kontak_darurat_name" class="form-label">Nama Kontak Darurat</label>
                         <input type="text" class="form-control @error('kontak_darurat_name') is-invalid @enderror" id="kontak_darurat_name" name="kontak_darurat_name" value="{{ old('kontak_darurat_name') }}" required>
@@ -157,7 +169,6 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
                     {{-- Form Tambahan Berdasarkan Kategori --}}
                     {{-- Family Run --}}
                     @if($category->name === 'Family Run')
@@ -169,9 +180,9 @@
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="usia_anak" class="form-label">Usia Anak</label>
-                            <input type="text" class="form-control @error('usia_anak') is-invalid @enderror" id="usia_anak" name="usia_anak" value="{{ old('usia_anak') }}" required>
-                            @error('usia_anak')
+                            <label for="tgl_lahir_anak" class="form-label">Tanggal Lahir Anak</label>
+                            <input type="date" class="form-control @error('tgl_lahir_anak') is-invalid @enderror" id="tgl_lahir_anak" name="tgl_lahir_anak" value="{{ old('tgl_lahir_anak') }}" required>
+                            @error('tgl_lahir_anak')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -185,7 +196,7 @@
                                 <option value="M">M</option>
                                 <option value="L">L</option>
                                 <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
+                                {{-- <option value="XXL">XXL</option> --}}
                             </select>
                             @error('size_anak')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -198,7 +209,15 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                    @endif 
+                    @endif
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                Data yang telah diisikan adalah data yang benar dan jika ada sesuatu hal mengenai data tersebut adalah tanggung jawab peserta.
+                            </label>
+                        </div>
+                    </div>
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('home') }}" class="btn btn-secondary">Kembali</a>
                         <button type="button" class="btn btn-primary" id="verifyDataBtn">Lanjutkan</button>
@@ -295,21 +314,35 @@
     // validate usia anak
     document.addEventListener('DOMContentLoaded', function() {
         var today = new Date(); // Get today's date
-        
-        // Maximum date (children must be at least 0 years old - use today)
-        var maxDate = new Date();
-        
-        // Minimum date (children must be at most 12 years old)
-        var minDate = new Date();
+        var maxDate = new Date(); // Maximum date (children must be at least 0 years old - use today)
+        var minDate = new Date(); // Minimum date (children must be at most 12 years old)
         minDate.setFullYear(today.getFullYear() - 12);
-        
+
         var dateInput = document.getElementById('tgl_lahir_anak');
-        
-        // Set max and min date attributes (swap them!)
+        var errorMessage = document.getElementById('error-message');
+
+        // Set max and min date attributes
         dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
         dateInput.setAttribute('min', minDate.toISOString().split('T')[0]);
-    });
 
+        // Check if the selected date is valid when the form is submitted
+        document.querySelector('form').addEventListener('submit', function(event) {
+            var birthdate = new Date(dateInput.value);
+            var age = today.getFullYear() - birthdate.getFullYear();
+            var m = today.getMonth() - birthdate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+                age--;
+            }
+
+            // If the age is less than 0 or more than 12, prevent the form from submitting and show an error message
+            if (age < 0 || age > 12) {
+                event.preventDefault(); // Prevent form submission
+                errorMessage.style.display = 'inline'; // Show the error message
+            } else {
+                errorMessage.style.display = 'none'; // Hide the error message if valid
+            }
+        });
+    });
     // Format number
     function numberFormat(number) {
         return new Intl.NumberFormat('id-ID').format(number);
@@ -329,7 +362,15 @@
     function getGenderText(gender) {
         return gender === 'laki-laki' ? 'Laki-laki' : (gender === 'perempuan' ? 'Perempuan' : '');
     }
-
+    document.getElementById('verifyDataBtn').addEventListener('click', function(event) {
+        var termsCheck = document.getElementById('termsCheck');
+        
+        // Cek apakah checkbox sudah dicentang
+        if (!termsCheck.checked) {
+            alert('Anda harus menyetujui syarat dan ketentuan untuk melanjutkan.');
+            event.preventDefault(); // Cegah form untuk dikirim
+        }
+    });
     // Open verification modal
     $('#verifyDataBtn').click(function() {
         // Validate form
@@ -370,7 +411,7 @@
         // Kategori spesifik - Family Run
         @if($category->name === 'Family Run')
         $('#verify-nama-anak').text($('#nama_anak').val());
-        $('#verify-usia-anak').text($('#usia_anak').val());
+        $('#verify-usia-anak').text(formatDate($('#tgl_lahir_anak').val()));
         $('#verify-size-anak').text($('#size_anak').val());
         $('#verify-bib-anak').text($('#bib_anak').val());
         @endif
