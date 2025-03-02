@@ -7,13 +7,28 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-body text-center py-5">
-                <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
-                <h2 class="mt-4">Status Pesanan Anda {{ $order->status }}</h2>
-                <p class="mb-4">
-                    Terima kasih! Bukti pembayaran Anda telah kami terima dan sedang dalam proses verifikasi. <br>
-                    Mohon tunggu konfirmasi melalui email Anda. <br>
-                    Verifikasi Pembayaran akan diproses dalam jam kerja (08.00-17.00 WIB).
-                </p>
+                @if($order->status == 'pending')
+                    <i class="fas fa-clock text-warning" style="font-size: 5rem;"></i>
+                    <h2 class="mt-4">Status Pesanan Anda Sedang Diproses</h2>
+                    <p class="mb-4">
+                        Terima kasih! Bukti pembayaran Anda telah kami terima dan sedang dalam proses verifikasi. <br>
+                        Mohon tunggu konfirmasi melalui email Anda. <br>
+                        Verifikasi Pembayaran akan diproses dalam jam kerja (08.00-17.00 WIB).
+                    </p>
+                @elseif($order->status == 'success')
+                    <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                    <h2 class="mt-4">Status Pesanan Anda Sudah Diverifikasi</h2>
+                    <p class="mb-4">
+                        Terima kasih! Bukti pembayaran Anda telah berhasil diverifikasi. <br>
+                        Anda akan menerima konfirmasi lebih lanjut melalui email.
+                    </p>
+                @else
+                    <i class="fas fa-times-circle text-danger" style="font-size: 5rem;"></i>
+                    <h2 class="mt-4">Status Pesanan Anda Ditolak</h2>
+                    <p class="mb-4">
+                        Mohon maaf, pesanan Anda telah ditolak. Silakan hubungi customer service untuk informasi lebih lanjut atau periksa alasan penolakan melalui email.
+                    </p>
+                @endif
                 
                 <div class="alert alert-info">
                     <h5 id="order-id" style="display: inline;">
