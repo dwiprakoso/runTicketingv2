@@ -29,5 +29,10 @@ class TicketEmail extends Mailable
                    ->attachData($pdf->output(), 'ticket.pdf', [
                        'mime' => 'application/pdf',
                    ]);
+        // return $this->subject('Tiket Event Anda')
+        //            ->view('emails.ticket')
+        //            ->attachData($pdf->output(), 'ticket.pdf', [
+        //                'mime' => 'application/pdf',
+        //            ]);
     }
 }

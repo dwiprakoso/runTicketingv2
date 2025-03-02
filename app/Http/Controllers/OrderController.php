@@ -42,7 +42,7 @@ class OrderController extends Controller
         // Get the category first to use its name
         $category = TicketCategory::findOrFail($request->ticket_category_id);
         
-        // Base validation rules - kode validasi tetap sama
+        // Base validation rules
         $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -52,24 +52,24 @@ class OrderController extends Controller
             'nik' => 'required|string',
             'gol_darah' => 'required|string|in:A,B,AB,O',
             'alamat' => 'required|string',
-            'size_chart' => 'required|string|in:S,M,L,XL,XXL',
             'bib_name' => 'required|string|max:255',
             'komunitas' => 'nullable|string|max:255',
             'kontak_darurat_name' => 'required|string|max:255',
             'kontak_darurat_no' => 'required|string|max:20',
             'ticket_category_id' => 'required|exists:ticket_categories,id',
         ];
-        
-        // Tambahkan aturan validasi berdasarkan kategori - kode validasi tetap sama
+
+        // Validation rules for specific categories
         if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
             $rules['tgl_lahir'] = 'required|date';
+            $rules['size_chart'] = 'required|string|in:S,M,L,XL,XXL';
         }
-        
+
         if ($category->name === 'Kids 3K') {
             $rules['tgl_lahir_anak'] = ['required', 'date', function ($attribute, $value, $fail) {
                 $birthdate = Carbon::parse($value);
-                $maxAgeDate = Carbon::now()->subYears(12); // Maksimal usia 12 tahun
-                $minAgeDate = Carbon::now(); // Minimal usia 0 tahun
+                $maxAgeDate = Carbon::now()->subYears(12);
+                $minAgeDate = Carbon::now();
                 
                 if ($birthdate->lt($maxAgeDate)) {
                     $fail('Usia anak maksimal adalah 12 tahun.');
@@ -79,19 +79,20 @@ class OrderController extends Controller
                     $fail('Tanggal lahir tidak boleh di masa depan.');
                 }
             }];
+            $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
         }
-        
+
         if ($category->name === 'Fun Run') {
             $rules['jarak_lari'] = 'required|string|in:3K,7K';
         }
-        
+
         if ($category->name === 'Family Run') {
             $rules['nama_anak'] = 'required|string|max:255';
             $rules['tgl_lahir_anak'] = 'required|string';
             $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
             $rules['bib_anak'] = 'required|string|max:255';
         }
-        
+
         // Run validation
         $validator = Validator::make($request->all(), $rules);
         
@@ -100,16 +101,16 @@ class OrderController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
-        
+
         // Check if category has available quota
         if ($category->availableQuota() <= 0) {
             return redirect()->route('home')->with('error', 'Tiket untuk kategori ini telah habis.');
         }
-        
+
         try {
             DB::beginTransaction();
-            
-            // PERUBAHAN: Selalu buat user baru, tanpa pengecekan email yang sama
+
+            // User creation
             $user = new User;
             $user->email = $request->email;
             $user->first_name = $request->first_name;
@@ -117,29 +118,28 @@ class OrderController extends Controller
             $user->no_hp = $request->no_hp;
             $user->nik = $request->nik;
             $user->gender = $request->gender;
-            
-            // Handle tanggal lahir sesuai kategori
-            if ($category->name === 'Fun Run' || $category->name === 'Family Run'|| $category->name === 'Early Bird - Fun Run 7K') {
+
+            if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
                 $user->tgl_lahir = $request->tgl_lahir;
             } elseif ($category->name === 'Kids 3K') {
                 $user->tgl_lahir = $request->tgl_lahir_anak;
             }
-            
+
             $user->gol_darah = $request->gol_darah;
             $user->alamat = $request->alamat;
             $user->komunitas = $request->komunitas;
             $user->kontak_darurat_name = $request->kontak_darurat_name;
             $user->kontak_darurat_no = $request->kontak_darurat_no;
             $user->save();
-            
+
             $totalPrice = $category->price;
             $paymentDeadline = Carbon::now()->addHour();
-            
+
             // Generate order number
             $today = Carbon::now()->format('Ymd');
             $prefix = 'RUN-' . $today . '-';
-            
-            // Gunakan Cache untuk atomic operations
+
+            // Cache lock for atomicity
             $orderNumber = Cache::lock('order_number_lock', 10)->get(function () use ($prefix) {
                 $lastOrder = Order::where('order_number', 'like', $prefix . '%')
                     ->orderBy('id', 'desc')
@@ -153,18 +153,16 @@ class OrderController extends Controller
                 
                 return $prefix . '0001';
             });
-            
-            // Buat order baru dengan semua data dari request dan order number
+
+            // Create new order
             $orderData = [
                 'user_id' => $user->id,
                 'ticket_category_id' => $category->id,
-                'order_number' => $orderNumber, // Tambahkan order number
+                'order_number' => $orderNumber,
                 'total_price' => $totalPrice,
                 'status' => 'pending',
                 'payment_deadline' => $paymentDeadline,
-                'size_chart' => $request->size_chart,
                 'bib_name' => $request->bib_name,
-                // Data yang sebelumnya disimpan di user, sekarang disimpan per order
                 'gender' => $request->gender,
                 'nik' => $request->nik,
                 'gol_darah' => $request->gol_darah,
@@ -173,89 +171,79 @@ class OrderController extends Controller
                 'kontak_darurat_name' => $request->kontak_darurat_name,
                 'kontak_darurat_no' => $request->kontak_darurat_no
             ];
-            
-            // Tambahkan field spesifik kategori
+
             if ($category->name === 'Fun Run') {
                 $orderData['jarak_lari'] = $request->jarak_lari;
-                $orderData['tgl_lahir'] = $request->tgl_lahir;
+                $orderData['size_chart'] = $request->size_chart;
             } elseif ($category->name === 'Family Run') {
                 $orderData['nama_anak'] = $request->nama_anak;
-                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
                 $orderData['size_anak'] = $request->size_anak;
                 $orderData['bib_anak'] = $request->bib_anak;
-                $orderData['tgl_lahir'] = $request->tgl_lahir;
+                $orderData['size_chart'] = $request->size_chart;
             } elseif ($category->name === 'Kids 3K') {
-                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
+                $orderData['size_anak'] = $request->size_anak;
             }
-            elseif ($category->name === 'Early Bird - Fun Run 7K') {
-                $orderData['tgl_lahir'] = $request->tgl_lahir;
-            }
-            
+
             $order = Order::create($orderData);
-            
-            Log::info('Order created with ID: ' . $order->id . ' and Order Number: ' . $orderNumber);
-            
-            if (!$order->id) {
-                throw new \Exception('Order ID is null after creation');
-            }
-            
+
+            // Create payment record
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'status' => 'pending',
                 'amount' => $totalPrice,
             ]);
-            
-            Log::info('Payment created with ID: ' . $payment->id . ' for order: ' . $order->id);
-            
+
             DB::commit();
-            
-            // Dispatch jobs for reminders and expiration
+
+            // Dispatch reminder and expiration jobs
             SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(0));
             ExpireOrderJob::dispatch($order)->delay($paymentDeadline);
-            
+
             return redirect()->route('orders.payment', $order->id);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Order creation failed: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
+
     
     public function showPayment($orderId)
-    {
-        try {
-            $order = Order::with(['ticketCategory', 'payment', 'user'])->findOrFail($orderId);
+{
+    try {
+        $order = Order::with(['ticketCategory', 'payment', 'user', 'addOns'])->findOrFail($orderId);
+        
+        // Tetapkan biaya admin (hanya untuk tampilan)
+        $adminFee = 4000;
+        
+        if (!$order->payment) {
+            Log::warning('Payment record not found for order #' . $order->id . ', creating one');
+            Payment::create([
+                'order_id' => $order->id,
+                'status' => 'pending',
+                'amount' => $order->total_price, // Tetap menggunakan total_price asli tanpa admin fee
+            ]);
             
-            if (!$order->payment) {
-                Log::warning('Payment record not found for order #' . $order->id . ', creating one');
-                Payment::create([
-                    'order_id' => $order->id,
-                    'status' => 'pending',
-                    'amount' => $order->total_price,
-                ]);
-                
-                $order = Order::with(['ticketCategory', 'payment', 'user'])->findOrFail($orderId);
-            }
-            
-            $orderVoucher = OrderVoucher::where('order_id', $order->id)->first();
-            $voucher = null;
-            if ($orderVoucher) {
-                $voucher = Voucher::find($orderVoucher->voucher_id);
-            }
-            
-            if ($order->status !== 'pending') {
-                return redirect()->route('home')->with('error', 'Order ini tidak dalam status pending.');
-            }
-            
-            return view('orders.payment', compact('order', 'voucher'));
-        } catch (\Exception $e) {
-            Log::error('Error in showPayment: ' . $e->getMessage());
-            return redirect()->route('home')->with('error', 'Order tidak ditemukan.');
+            $order = Order::with(['ticketCategory', 'payment', 'user', 'addOns'])->findOrFail($orderId);
         }
+        
+        $orderVoucher = OrderVoucher::where('order_id', $order->id)->first();
+        $voucher = null;
+        if ($orderVoucher) {
+            $voucher = Voucher::find($orderVoucher->voucher_id);
+        }
+        
+        if ($order->status !== 'pending') {
+            return redirect()->route('home')->with('error', 'Order ini tidak dalam status pending.');
+        }
+        
+        // Mengirim admin fee ke view untuk digunakan dalam tampilan saja
+        return view('orders.payment', compact('order', 'voucher', 'adminFee'));
+    } catch (\Exception $e) {
+        Log::error('Error in showPayment: ' . $e->getMessage());
+        return redirect()->route('home')->with('error', 'Order tidak ditemukan.');
     }
-    
+}
     public function applyVoucher(Request $request, $orderId)
 {
     $requestId = uniqid('voucher_');

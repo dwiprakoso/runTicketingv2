@@ -122,22 +122,44 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    {{-- Size Chart Dewasa --}}
-                    <img src="{{ asset('img/sizeChart.jpg') }}"  width="80%" class="mb-3">
-                    <div class="mb-3">
-                        <label for="size_chart" class="form-label">Size Chart</label>
-                        <select name="size_chart" id="size_chart" class="form-control">
-                            <option value=""><-- Select Option --></option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
-                        </select>
-                        @error('size_chart')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                                        {{-- Size Chart Dewasa --}}
+                    @if($category->name === 'Fun Run' || $category->name === 'Family Run'|| $category->name === 'Early Bird - Fun Run 7K')
+                    <img src="{{ asset('img/sizeChart.png') }}"  width="80%" class="mb-3">
+                        <div class="mb-3">
+                            <label for="size_chart" class="form-label">Size Chart</label>
+                            <select name="size_chart" id="size_chart" class="form-control">
+                                <option value=""><-- Select Option --></option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
+                            @error('size_chart')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
+
+                    
+                    {{-- Size Chart Anak --}}
+                    @if($category->name === 'Kids 3K')
+                    <img src="{{ asset('img/sizeChart_anak.png') }}"  width="80%" class="mb-3">
+                        <div class="mb-3">
+                            <label for="size_anak" class="form-label">Size Chart</label>
+                            <select name="size_anak" id="size_anak" class="form-control">
+                                <option value=""><-- Select Option --></option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                            </select>
+                            @error('size_anak')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     {{-- Nama BIB --}}
                     <div class="mb-3">
                         <label for="bib_name" class="form-label">Nama BIB</label>
@@ -186,7 +208,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <img src="{{ asset('img/sizeChart.jpg') }}"  width="80%" class="mb-3">
+                        <img src="{{ asset('img/sizeChart_anak.png') }}"  width="80%" class="mb-3">
                         <div class="mb-3">
                             <label for="size_anak" class="form-label">Size Chart Anak</label>
                             <select name="size_anak" id="size_anak" class="form-control">
@@ -196,7 +218,6 @@
                                 <option value="M">M</option>
                                 <option value="L">L</option>
                                 <option value="XL">XL</option>
-                                {{-- <option value="XXL">XXL</option> --}}
                             </select>
                             @error('size_anak')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -227,7 +248,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modal Verifikasi -->
 <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -395,7 +415,11 @@
         $('#verify-nik').text($('#nik').val());
         $('#verify-gol-darah').text($('#gol_darah').val());
         $('#verify-alamat').text($('#alamat').val());
-        $('#verify-size-chart').text($('#size_chart').val());
+        @if($category->name === 'Kids 3K')
+            $('#verify-size-chart').text($('#size_anak').val());
+        @else
+            $('#verify-size-chart').text($('#size_chart').val());
+        @endif
         $('#verify-bib-name').text($('#bib_name').val());
         $('#verify-komunitas').text($('#komunitas').val() || '-');
 

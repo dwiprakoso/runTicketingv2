@@ -15,7 +15,7 @@
                         Mohon tunggu konfirmasi melalui email Anda. <br>
                         Verifikasi Pembayaran akan diproses dalam jam kerja (08.00-17.00 WIB).
                     </p>
-                @elseif($order->status == 'success')
+                @elseif($order->status == 'verified')
                     <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
                     <h2 class="mt-4">Status Pesanan Anda Sudah Diverifikasi</h2>
                     <p class="mb-4">

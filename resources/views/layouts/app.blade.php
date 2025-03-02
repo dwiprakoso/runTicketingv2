@@ -8,6 +8,29 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .pagination a, .pagination span {
+            padding: 8px 16px;
+            margin: 0 4px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .pagination a:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination .active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination .disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
         html, body {
             height: 100%;
             margin: 0;

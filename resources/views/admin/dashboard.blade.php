@@ -241,7 +241,7 @@
                             </table>
                         </div>
                         <div class="d-flex justify-content-center mt-3">
-                            {{ $orders->links() }}
+                            {{ $orders->links('pagination::bootstrap-4') }}
                         </div>
                     @endif
                 </div>

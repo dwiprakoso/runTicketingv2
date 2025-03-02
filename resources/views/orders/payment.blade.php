@@ -99,12 +99,19 @@
                     </div>
                 </div>
                 
+                <!-- Tambahkan variabel untuk admin fee -->
+                @php
+                    $adminFee = 4000; // Tetapkan nilai admin fee (contoh: Rp 5,000)
+                    $subtotal = $order->total_price;
+                    $grandTotal = $subtotal + $adminFee;
+                @endphp
+                
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-body">
                                 <h5>Metode Pembayaran</h5>
-                                @if($order->total_price > 0)
+                                @if($grandTotal > 0)
                                 <p>Silakan transfer ke rekening berikut:</p>
                                 <div class="alert alert-info">
                                     <strong>Bank Danamon</strong><br>
@@ -122,9 +129,22 @@
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-body">
-                                <h5>Total Pembayaran</h5>
-                                <div class="alert alert-primary">
-                                    <h3 class="mb-0">Rp {{ number_format($order->total_price, 0, ',', '.') }}</h3>
+                                <h5>Rincian Pembayaran</h5>
+                                <div class="card-body p-0">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td>Subtotal</td>
+                                            <td class="text-end">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Biaya Admin</td>
+                                            <td class="text-end">Rp {{ number_format($adminFee, 0, ',', '.') }}</td>
+                                        </tr>
+                                        <tr class="fw-bold">
+                                            <td>Total Pembayaran</td>
+                                            <td class="text-end">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -145,7 +165,7 @@
                     <div class="text-end">
                         <a href="{{ route('orders.success', $order->id) }}" class="btn btn-primary">Lihat Tiket</a>
                     </div>
-                @elseif($order->total_price <= 0)
+                @elseif($grandTotal <= 0)
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle me-2"></i> Pembayaran otomatis terverifikasi (GRATIS)
                         @if($voucher)
