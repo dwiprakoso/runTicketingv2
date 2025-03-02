@@ -171,7 +171,14 @@
                         @csrf
                         <div class="mb-3">
                             <label for="proof_image" class="form-label">Bukti Pembayaran (JPG, PNG, PDF max 2MB)</label>
-                            <input class="form-control @error('proof_image') is-invalid @enderror" type="file" id="proof_image" name="proof_image" accept=".jpg,.jpeg,.png,.pdf" required>
+                            <input class="form-control @error('proof_image') is-invalid @enderror" 
+                                   type="file" 
+                                   id="proof_image" 
+                                   name="proof_image" 
+                                   accept=".jpg,.jpeg,.png,.pdf" 
+                                   required
+                                   onchange="validateFileSize(this)">
+                            <div class="invalid-feedback" id="file-size-error">File tidak boleh lebih dari 2MB</div>
                             @error('proof_image')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -189,6 +196,24 @@
 
 @section('scripts')
 <script>
+    function validateFileSize(input) {
+    // 2MB dalam bytes = 2 * 1024 * 1024
+    const maxSize = 2 * 1024 * 1024;
+    
+    if (input.files && input.files[0]) {
+        if (input.files[0].size > maxSize) {
+            // File terlalu besar
+            input.classList.add('is-invalid');
+            document.getElementById('file-size-error').style.display = 'block';
+            // Reset input file
+            input.value = '';
+        } else {
+            // File ukurannya sesuai
+            input.classList.remove('is-invalid');
+            document.getElementById('file-size-error').style.display = 'none';
+        }
+    }
+}
     document.addEventListener("DOMContentLoaded", function () {
         // Voucher form submit handler - prevent double submit
         const voucherForm = document.querySelector('form[action*="apply-voucher"]');

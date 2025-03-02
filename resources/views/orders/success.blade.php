@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-body text-center py-5">
                 <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
-                <h2 class="mt-4">Pembayaran Sedang Diproses</h2>
+                <h2 class="mt-4">Status Pesanan Anda {{ $order->status }}</h2>
                 <p class="mb-4">
                     Terima kasih! Bukti pembayaran Anda telah kami terima dan sedang dalam proses verifikasi. <br>
                     Mohon tunggu konfirmasi melalui email Anda. <br>

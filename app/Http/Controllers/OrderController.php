@@ -210,7 +210,7 @@ class OrderController extends Controller
             DB::commit();
             
             // Dispatch jobs for reminders and expiration
-            SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(30));
+            SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(0));
             ExpireOrderJob::dispatch($order)->delay($paymentDeadline);
             
             return redirect()->route('orders.payment', $order->id);
