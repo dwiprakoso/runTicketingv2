@@ -15,10 +15,10 @@ return new class extends Migration
             $table->decimal('total_price', 10, 2);
             $table->enum('status', ['pending', 'verified', 'rejected', 'expired'])->default('pending');
             $table->timestamp('payment_deadline')->nullable();
-            $table->string('size_chart'); // T-shirt size
             $table->string('bib_name'); // Name to display on race bib
             
             // Fields for different categories
+            $table->string('size_chart')->nullable();; // T-shirt size
             $table->string('jarak_lari')->nullable(); // Race distance (for 'Umum' category)
             $table->string('nama_anak')->nullable(); // Child's name (for 'Family Run' category)
             $table->string('usia_anak')->nullable(); // Child's age (for 'Family Run' category)

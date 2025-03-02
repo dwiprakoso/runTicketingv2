@@ -227,6 +227,7 @@
                                                         data-order-id="{{ $order->id }}" 
                                                         data-user-name="{{ $order->user->first_name }} {{ $order->user->last_name }}" 
                                                         data-ticket-category="{{ $order->ticketCategory->name }}" 
+                                                        data-amount="{{ $order->payment->amount ?? 0 }}" 
                                                         data-addons="{{ json_encode($order->addOns) }}" 
                                                         data-payment-proof="{{ asset('storage/' . $order->payment->proof_image) }}">
                                                         Verifikasi
@@ -604,10 +605,8 @@
                         <hr>
                         <p id="modalUserName">Nama Pengguna: </p>
                         <p id="modalTicketCategory">Kategori Tiket: </p>
-                        <h6>Add Ons:</h6>
-                        <ul id="modalAddons">
-                            <!-- Will be filled by JavaScript -->
-                        </ul>
+                        <p id="modalAmount">Total Tagihan: </p>
+
                     </div>
                     
                     <!-- Bukti Pembayaran -->
@@ -650,6 +649,16 @@ $(document).ready(function() {
         var orderId = button.data('order-id');
         var userName = button.data('user-name');
         var ticketCategory = button.data('ticket-category');
+        var amount = button.data('amount');
+        
+        // Fix: Check if amount is valid before adding
+        if (amount !== undefined && amount !== null && amount !== '') {
+            amount = parseInt(amount) || 0; // Use 0 if parsing fails
+            amount = amount + 4000;
+        } else {
+            amount = 4000; // Default to just the added fee if no amount is provided
+        }
+        
         var addons = button.data('addons');
         var paymentProof = button.data('payment-proof');
         
@@ -657,6 +666,7 @@ $(document).ready(function() {
         
         modal.find('#modalUserName').text('Nama Pengguna: ' + userName);
         modal.find('#modalTicketCategory').text('Kategori Tiket: ' + ticketCategory);
+        modal.find('#modalAmount').text('Total Tagihan: Rp ' + amount.toLocaleString('id-ID'));
         
         var addonsList = modal.find('#modalAddons');
         addonsList.empty();

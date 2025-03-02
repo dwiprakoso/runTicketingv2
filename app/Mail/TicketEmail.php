@@ -25,10 +25,7 @@ class TicketEmail extends Mailable
         $pdf = PDF::loadView('emails.ticket-pdf', ['order' => $this->order]);
         
         return $this->subject('Tiket Event Anda')
-                   ->view('emails.ticket')
-                   ->attachData($pdf->output(), 'ticket.pdf', [
-                       'mime' => 'application/pdf',
-                   ]);
+                   ->view('emails.ticket');
         // return $this->subject('Tiket Event Anda')
         //            ->view('emails.ticket')
         //            ->attachData($pdf->output(), 'ticket.pdf', [
