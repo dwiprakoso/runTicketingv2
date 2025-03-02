@@ -196,7 +196,7 @@
 
 @section('scripts')
 <script>
-    function validateFileSize(input) {
+       function validateFileSize(input) {
     // 2MB dalam bytes = 2 * 1024 * 1024
     const maxSize = 2 * 1024 * 1024;
     

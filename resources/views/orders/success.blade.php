@@ -16,7 +16,11 @@
                 </p>
                 
                 <div class="alert alert-info">
-                    <h5><strong>ID Pesanan: {{ $order->order_number }}</strong></h5>
+                    <h5 id="order-id" style="display: inline;">
+                        <strong>ID Pesanan: {{ $order->order_number }}</strong>
+                    </h5>
+                    <!-- Ikon salin di sebelah kanan ID Pesanan -->
+                    <i class="fas fa-copy" onclick="copyToClipboard()" style="cursor: pointer; margin-left: 10px;"></i>
                     <p class="mb-0"><strong>(Harap Simpan ID Pesanan Anda)</strong></p>
                     <br>
                     <p class="mb-0">Kategori: {{ $order->ticketCategory->name }}</p>
@@ -27,4 +31,28 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function copyToClipboard() {
+        // Ambil elemen dengan ID 'order-id'
+        var orderId = document.getElementById("order-id").innerText;
+        
+        // Buat elemen input sementara untuk menyalin teks
+        var tempInput = document.createElement("input");
+        document.body.appendChild(tempInput);
+        tempInput.value = orderId;
+        
+        // Pilih dan salin teks
+        tempInput.select();
+        document.execCommand("copy");
+        
+        // Hapus elemen input sementara
+        document.body.removeChild(tempInput);
+        
+        // Beri umpan balik kepada pengguna
+        alert("ID Pesanan berhasil disalin!");
+    }
+</script>
 @endsection
