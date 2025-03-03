@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pesanan Ditolak</title>
+    <title>Pesanan Tidak Diterima</title>
     <style>
         body {
             font-family: 'Montserrat', Arial, sans-serif;
@@ -100,12 +100,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Pesanan Anda Ditolak</h1>
+            <h1>Pesanan Anda Tidak Diterima</h1>
         </div>
         <div class="content">
             <div class="message">
                 <p>Hai <strong>{{ $order->user->first_name }} {{ $order->user->last_name }}</strong>,</p>
-                <p>Kami mohon maaf untuk memberitahukan bahwa pesanan Anda dengan ID <strong>{{ $order->order_number }}</strong> telah ditolak oleh sistem kami.</p>
+                <p>Kami mohon maaf untuk memberitahukan bahwa pesanan Anda dengan ID <strong>{{ $order->order_number }}</strong> telah gagal untuk verifikasi pembayaran.</p>
             </div>
             
             <div class="order-details">
@@ -113,7 +113,7 @@
                 <ul>
                     <li><strong>ID Pesanan:</strong> {{ $order->order_number }}</li>
                     <li><strong>Tanggal Pemesanan:</strong> {{ \Carbon\Carbon::parse($order->created_at)->locale('id')->isoFormat('D MMMM Y') }}</li>
-                    <li><strong>Status Pesanan:</strong> Ditolak</li>
+                    <li><strong>Status Pesanan:</strong> Tidak Diterima</li>
                     <li><strong>Kategori Tiket:</strong> Semarang Apoteker Run 2025 - {{ $order->ticketCategory->name }}</li>
                     <li><strong>Harga:</strong> Rp {{ number_format($order->payment->amount ?? 0, 0, ',', '.') }}</li>
                 </ul>

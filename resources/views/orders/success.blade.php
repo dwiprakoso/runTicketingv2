@@ -24,9 +24,9 @@
                     </p>
                 @else
                     <i class="fas fa-times-circle text-danger" style="font-size: 5rem;"></i>
-                    <h2 class="mt-4">Status Pesanan Anda Ditolak</h2>
+                    <h2 class="mt-4">Status Pesanan Anda Tidak Diterima</h2>
                     <p class="mb-4">
-                        Mohon maaf, pesanan Anda telah ditolak. Silakan hubungi customer service untuk informasi lebih lanjut atau periksa alasan penolakan melalui email.
+                        Mohon maaf, pesanan Anda telah Tidak Diterima. Silakan hubungi customer service untuk informasi lebih lanjut atau periksa alasan penolakan melalui email.
                     </p>
                 @endif
                 
