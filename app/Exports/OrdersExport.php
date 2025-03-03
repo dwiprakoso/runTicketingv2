@@ -27,7 +27,6 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
         
         return $query->get();
     }
-
     public function headings(): array
     {
         return [
