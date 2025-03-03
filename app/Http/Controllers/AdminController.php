@@ -10,6 +10,7 @@ use App\Mail\OrderRejected;
 use Illuminate\Http\Request;
 use App\Jobs\SendTicketEmail;
 use App\Models\TicketCategory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -34,123 +35,140 @@ class AdminController extends Controller
     }
     
     public function dashboard(Request $request)
-{
-    if (!session('admin_authenticated')) {
-        return redirect()->route('admin.login');
-    }
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('admin.login');
+        }
 
-    $query = Order::with([
-        'user', 'ticketCategory', 'payment', 'addOns', 'orderVoucher.voucher'
-    ]);
+        $query = Order::with([
+            'user', 'ticketCategory', 'payment', 'addOns', 'orderVoucher.voucher'
+        ]);
 
-    if ($request->has('status')) {
-        $query->where('status', $request->status);
-    }
-    
-    if ($request->has('ticketCategory')) {
-        $query->whereHas('ticketCategory', function ($q) use ($request) {
-            $q->where('name', $request->ticketCategory);
-        });
-    }
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->has('ticketCategory')) {
+            $query->whereHas('ticketCategory', function ($q) use ($request) {
+                $q->where('name', $request->ticketCategory);
+            });
+        }
 
-    $orders = $query->paginate(10);
-    $categories = TicketCategory::all();
-    $vouchers = Voucher::all();
-    
-    // Calculate statistics for all orders per category
-    $categoryStats = [];
-    foreach ($categories as $category) {
-        $count = Order::whereHas('ticketCategory', function($q) use ($category) {
-            $q->where('id', $category->id);
-        })->count();
-        $categoryStats[$category->name] = $count;
-    }
-    
-    // Calculate statistics for VERIFIED orders per category
-    $verifiedCategoryStats = [];
-    foreach ($categories as $category) {
-        $count = Order::where('status', 'verified')
-            ->whereHas('ticketCategory', function($q) use ($category) {
+        $orders = $query->paginate(10);
+        $categories = TicketCategory::all();
+        $vouchers = Voucher::all();
+        
+        // Calculate statistics for all orders per category
+        $categoryStats = [];
+        foreach ($categories as $category) {
+            $count = Order::whereHas('ticketCategory', function($q) use ($category) {
                 $q->where('id', $category->id);
             })->count();
-        $verifiedCategoryStats[$category->name] = $count;
-    }
-    
-    // Modified: Calculate gender stats ONLY for verified orders
-    $genderStats = [
-        'Laki-laki' => Order::where('status', 'verified')
-            ->whereHas('user', function($q) {
-                $q->where('gender', 'laki-laki');
-            })->count(),
-        'Perempuan' => Order::where('status', 'verified')
-            ->whereHas('user', function($q) {
-                $q->where('gender', 'perempuan');
-            })->count()
-    ];
-    
-    // Modified: Add "Other" category for verified orders if needed
-    $otherGenderCount = Order::where('status', 'verified')
-        ->whereHas('user', function($q) {
-            $q->whereNotIn('gender', ['laki-laki', 'perempuan']);
-        })->count();
-    
-    if ($otherGenderCount > 0) {
-        $genderStats['Lainnya'] = $otherGenderCount;
-    }
-    
-    // Calculate shirt size statistics
-    $sizesArr = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-    $sizeStats = [];
-    
-    foreach ($sizesArr as $size) {
-        $count = Order::where('size_chart', $size)->count();
-        if ($count > 0) {
-            $sizeStats[$size] = $count;
+            $categoryStats[$category->name] = $count;
         }
-    }
-    
-    // Check for any other sizes not in the predefined list
-    $otherSizesCount = Order::whereNotIn('size_chart', $sizesArr)
-        ->whereNotNull('size_chart')
-        ->count();
         
-    if ($otherSizesCount > 0) {
-        $sizeStats['Lainnya'] = $otherSizesCount;
-    }
-    
-    // Calculate verified shirt size statistics
-    $verifiedSizeStats = [];
-    
-    foreach ($sizesArr as $size) {
-        $count = Order::where('status', 'verified')
-            ->where('size_chart', $size)
-            ->count();
-        if ($count > 0) {
-            $verifiedSizeStats[$size] = $count;
+        // Calculate statistics for VERIFIED orders per category
+        $verifiedCategoryStats = [];
+        foreach ($categories as $category) {
+            $count = Order::where('status', 'verified')
+                ->whereHas('ticketCategory', function($q) use ($category) {
+                    $q->where('id', $category->id);
+                })->count();
+            $verifiedCategoryStats[$category->name] = $count;
         }
-    }
-    
-    // Check for any other verified sizes not in the predefined list
-    $otherVerifiedSizesCount = Order::where('status', 'verified')
-        ->whereNotIn('size_chart', $sizesArr)
-        ->whereNotNull('size_chart')
-        ->count();
         
-    if ($otherVerifiedSizesCount > 0) {
-        $verifiedSizeStats['Lainnya'] = $otherVerifiedSizesCount;
-    }
+        // Modified: Calculate gender stats ONLY for verified orders
+        $genderStats = [
+            'Laki-laki' => Order::where('status', 'verified')
+                ->whereHas('user', function($q) {
+                    $q->where('gender', 'laki-laki');
+                })->count(),
+            'Perempuan' => Order::where('status', 'verified')
+                ->whereHas('user', function($q) {
+                    $q->where('gender', 'perempuan');
+                })->count()
+        ];
+        
+        // Modified: Add "Other" category for verified orders if needed
+        $otherGenderCount = Order::where('status', 'verified')
+            ->whereHas('user', function($q) {
+                $q->whereNotIn('gender', ['laki-laki', 'perempuan']);
+            })->count();
+        
+        if ($otherGenderCount > 0) {
+            $genderStats['Lainnya'] = $otherGenderCount;
+        }
+        
+        // Calculate combined shirt size statistics ONLY FOR VERIFIED ORDERS
+        $sizesArr = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+        $sizeStats = [];
+        
+        // Initialize the size statistics array
+        foreach ($sizesArr as $size) {
+            $sizeStats[$size] = 0;
+        }
+        
+        // Count size_chart occurrences (verified only)
+        $sizeChartCounts = Order::where('status', 'verified')
+            ->whereNotNull('size_chart')
+            ->select('size_chart', DB::raw('count(*) as total'))
+            ->groupBy('size_chart')
+            ->pluck('total', 'size_chart')
+            ->toArray();
+        
+        // Count size_anak occurrences (verified only)
+        $sizeAnakCounts = Order::where('status', 'verified')
+            ->whereNotNull('size_anak')
+            ->select('size_anak', DB::raw('count(*) as total'))
+            ->groupBy('size_anak')
+            ->pluck('total', 'size_anak')
+            ->toArray();
+        
+        // Combine the counts
+        foreach ($sizeChartCounts as $size => $count) {
+            if (in_array($size, $sizesArr)) {
+                $sizeStats[$size] += $count;
+            } else {
+                if (!isset($sizeStats['Lainnya'])) {
+                    $sizeStats['Lainnya'] = 0;
+                }
+                $sizeStats['Lainnya'] += $count;
+            }
+        }
+        
+        foreach ($sizeAnakCounts as $size => $count) {
+            if (in_array($size, $sizesArr)) {
+                $sizeStats[$size] += $count;
+            } else {
+                if (!isset($sizeStats['Lainnya'])) {
+                    $sizeStats['Lainnya'] = 0;
+                }
+                $sizeStats['Lainnya'] += $count;
+            }
+        }
+        
+        // Remove sizes with zero count
+        foreach ($sizeStats as $size => $count) {
+            if ($count == 0) {
+                unset($sizeStats[$size]);
+            }
+        }
+        
+        // We've combined both sets of statistics for verified orders only,
+        // so we'll just use the same $sizeStats for both variables
+        $verifiedSizeStats = $sizeStats;
 
-    return view('admin.dashboard', compact(
-        'orders', 
-        'categories', 
-        'vouchers', 
-        'categoryStats', 
-        'verifiedCategoryStats', 
-        'genderStats', 
-        'sizeStats',
-        'verifiedSizeStats'
-    ));
-}
+        return view('admin.dashboard', compact(
+            'orders', 
+            'categories', 
+            'vouchers', 
+            'categoryStats', 
+            'verifiedCategoryStats', 
+            'genderStats', 
+            'sizeStats',
+            'verifiedSizeStats'
+        ));
+    }
     public function verifyOrder($orderId)
     {
         if (!session('admin_authenticated')) {
