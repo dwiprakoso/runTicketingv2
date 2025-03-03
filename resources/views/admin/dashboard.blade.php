@@ -177,7 +177,7 @@
                                             <td>{{ $order->user->no_hp }}</td>
                                             <td>{{ $order->user->nik }}</td>
                                             <td>{{ ucfirst($order->user->gender) }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($order->user->tgl_lahir)->format('d/m/Y') }}</td>
+                                            <td>{{ $order->user->tgl_lahir ? \Carbon\Carbon::parse($order->user->tgl_lahir)->locale('id')->isoFormat('D MMMM Y') : '-' }}</td>
                                             <td>{{ $order->user->gol_darah ?? '-' }}</td>
                                             <td>{{ $order->user->alamat }}</td>
                                             <td>{{ $order->size_chart }}</td>
@@ -189,7 +189,7 @@
                                             </td>
                                             <td>{{ $order->jarak_lari ?? '-' }}</td>
                                             <td>{{ $order->nama_anak }}</td>
-                                            <td>{{ $order->tgl_lahir_anak }}</td>
+                                            <td>{{ $order->user->tgl_lahir_anak ? \Carbon\Carbon::parse($order->user->tgl_lahir_anak)->locale('id')->isoFormat('D MMMM Y') : '-' }}</td>
                                             <td>{{ $order->size_anak }}</td>
                                             <td>{{ $order->bib_anak }}</td>
                                             <td>{{ $order->ticketCategory->name }}</td>

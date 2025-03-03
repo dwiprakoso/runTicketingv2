@@ -122,7 +122,7 @@ class OrderController extends Controller
             if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
                 $user->tgl_lahir = $request->tgl_lahir;
             } elseif ($category->name === 'Kids 3K') {
-                $user->tgl_lahir = $request->tgl_lahir_anak;
+                $user->tgl_lahir_anak = $request->tgl_lahir_anak;
             }
 
             $user->gol_darah = $request->gol_darah;

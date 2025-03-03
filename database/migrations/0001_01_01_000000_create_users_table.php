@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->enum('gender', ['laki-laki', 'perempuan']);
-            $table->date('tgl_lahir'); // Birth date
+            $table->date('tgl_lahir')->nullable(); // Birth date
             $table->string('email');
             $table->string('no_hp'); // Phone number
             $table->string('nik'); // National ID
