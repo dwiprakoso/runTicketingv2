@@ -100,7 +100,7 @@
                 <ul>
                     <li><strong>Nomor Order:</strong> {{ $order->order_number }}</li>
                     <li><strong>Kategori Tiket:</strong> {{ $order->ticketCategory->name }}</li>
-                    <li><strong>Total Harga:</strong> Rp {{ number_format(($order->payment->amount ?? 0) + 4000, 0, ',', '.') }}</li>
+                    <li><strong>Total Harga:</strong> Rp {{ number_format($order->payment->amount ?? 0, 0, ',', '.') }}</li>
                 </ul>
             </div>
 

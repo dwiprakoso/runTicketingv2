@@ -221,32 +221,68 @@ class OrderController extends Controller
     try {
         $order = Order::with(['ticketCategory', 'payment', 'user', 'addOns'])->findOrFail($orderId);
         
-        // Tetapkan biaya admin (hanya untuk tampilan)
+        // Harga dasar tiket (tanpa admin fee dan kode unik)
+        $basePrice = $order->ticketCategory->price;
+        
+        // Tambahkan add-ons jika ada
+        if($order->addOns->count() > 0) {
+            foreach($order->addOns as $addon) {
+                $basePrice += $addon->price;
+            }
+        }
+        
+        // Kurangi diskon voucher jika ada
+        $orderVoucher = OrderVoucher::where('order_id', $order->id)->first();
+        $voucher = null;
+        if ($orderVoucher) {
+            $voucher = Voucher::find($orderVoucher->voucher_id);
+            if ($voucher) {
+                $basePrice -= $voucher->discount_amount;
+                // Pastikan tidak negatif
+                $basePrice = max(0, $basePrice);
+            }
+        }
+        
+        // Biaya admin
         $adminFee = 4000;
+        
+        // Generate kode unik 3 digit (konsisten untuk order yang sama)
+        $uniqueCode = ($order->id * 7 + 101) % 900 + 100;
+        
+        // Total pembayaran termasuk biaya admin dan kode unik
+        $totalPayment = $basePrice + $adminFee + $uniqueCode;
+        
+        // Update total_price di order dengan total payment
+        $order->total_price = $totalPayment;
+        $order->save();
         
         if (!$order->payment) {
             Log::warning('Payment record not found for order #' . $order->id . ', creating one');
             Payment::create([
                 'order_id' => $order->id,
                 'status' => 'pending',
-                'amount' => $order->total_price, // Tetap menggunakan total_price asli tanpa admin fee
+                'amount' => $totalPayment,
             ]);
             
             $order = Order::with(['ticketCategory', 'payment', 'user', 'addOns'])->findOrFail($orderId);
-        }
-        
-        $orderVoucher = OrderVoucher::where('order_id', $order->id)->first();
-        $voucher = null;
-        if ($orderVoucher) {
-            $voucher = Voucher::find($orderVoucher->voucher_id);
+        } else {
+            // Update payment amount
+            $order->payment->amount = $totalPayment;
+            $order->payment->save();
         }
         
         if ($order->status !== 'pending') {
             return redirect()->route('home')->with('error', 'Order ini tidak dalam status pending.');
         }
         
-        // Mengirim admin fee ke view untuk digunakan dalam tampilan saja
-        return view('orders.payment', compact('order', 'voucher', 'adminFee'));
+        // Kirim komponen pembayaran terpisah ke view
+        return view('orders.payment', [
+            'order' => $order,
+            'voucher' => $voucher,
+            'basePrice' => $basePrice,
+            'adminFee' => $adminFee,
+            'uniqueCode' => $uniqueCode
+        ]);
     } catch (\Exception $e) {
         Log::error('Error in showPayment: ' . $e->getMessage());
         return redirect()->route('home')->with('error', 'Order tidak ditemukan.');

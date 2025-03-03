@@ -99,57 +99,59 @@
                     </div>
                 </div>
                 
-                <!-- Tambahkan variabel untuk admin fee -->
-                @php
-                    $adminFee = 4000; // Tetapkan nilai admin fee (contoh: Rp 5,000)
-                    $subtotal = $order->total_price;
-                    $grandTotal = $subtotal + $adminFee;
-                @endphp
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5>Metode Pembayaran</h5>
-                                @if($grandTotal > 0)
-                                <p>Silakan transfer ke rekening berikut:</p>
-                                <div class="alert alert-info">
-                                    <strong>Bank Danamon</strong><br>
-                                    No. Rekening: 903686907118<br>
-                                    Atas Nama: Yustisia Dian Advistasari
-                                </div>
-                                @else
-                                <div class="alert alert-success">
-                                    <p class="mb-0">GRATIS! Pembayaran tidak diperlukan.</p>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5>Rincian Pembayaran</h5>
-                                <div class="card-body p-0">
-                                    <table class="table table-borderless mb-0">
-                                        <tr>
-                                            <td>Subtotal</td>
-                                            <td class="text-end">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Biaya Admin</td>
-                                            <td class="text-end">Rp {{ number_format($adminFee, 0, ',', '.') }}</td>
-                                        </tr>
-                                        <tr class="fw-bold">
-                                            <td>Total Pembayaran</td>
-                                            <td class="text-end">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Bagian rincian pembayaran yang benar -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Metode Pembayaran</h5>
+                @if($order->total_price > 0)
+                <p>Silakan transfer ke rekening berikut:</p>
+                <div class="alert alert-info">
+                    <strong>Bank Danamon</strong><br>
+                    No. Rekening: 903686907118<br>
+                    Atas Nama: Yustisia Dian Advistasari
                 </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Penting:</strong> Mohon transfer sesuai nominal yang tertera, termasuk 3 digit terakhir (Rp {{ $uniqueCode }}), untuk memudahkan verifikasi pembayaran Anda.
+                </div>
+                @else
+                <div class="alert alert-success">
+                    <p class="mb-0">GRATIS! Pembayaran tidak diperlukan.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Rincian Pembayaran</h5>
+                <div class="card-body p-0">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td>Harga Tiket</td>
+                            <td class="text-end">Rp {{ number_format($basePrice, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td>Biaya Admin</td>
+                            <td class="text-end">Rp {{ number_format($adminFee, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td>Kode Unik</td>
+                            <td class="text-end">Rp {{ number_format($uniqueCode, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td>Total Pembayaran</td>
+                            <td class="text-end">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
         
@@ -165,7 +167,7 @@
                     <div class="text-end">
                         <a href="{{ route('orders.success', $order->id) }}" class="btn btn-primary">Lihat Tiket</a>
                     </div>
-                @elseif($grandTotal <= 0)
+                @elseif($order->total_price <= 0)
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle me-2"></i> Pembayaran otomatis terverifikasi (GRATIS)
                         @if($voucher)
@@ -192,12 +194,12 @@
                         <div class="mb-3">
                             <label for="proof_image" class="form-label">Bukti Pembayaran (JPG, PNG, PDF max 2MB)</label>
                             <input class="form-control @error('proof_image') is-invalid @enderror" 
-                                   type="file" 
-                                   id="proof_image" 
-                                   name="proof_image" 
-                                   accept=".jpg,.jpeg,.png,.pdf" 
-                                   required
-                                   onchange="validateFileSize(this)">
+                                    type="file" 
+                                    id="proof_image" 
+                                    name="proof_image" 
+                                    accept=".jpg,.jpeg,.png,.pdf" 
+                                    required
+                                    onchange="validateFileSize(this)">
                             <div class="invalid-feedback" id="file-size-error">File tidak boleh lebih dari 2MB</div>
                             @error('proof_image')
                                 <div class="invalid-feedback">{{ $message }}</div>
