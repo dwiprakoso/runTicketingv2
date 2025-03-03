@@ -8,50 +8,47 @@
     
     <!-- Summary Cards -->
     <div class="row mb-4">
-        <!-- Orders by Ticket Category Card -->
+        <!-- Statistik Pesanan Terverifikasi per Kategori -->
         <div class="col-md-4 mb-3">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Pesanan per Kategori</h5>
+                    <h5 class="card-title">Pesanan Terverifikasi per Kategori</h5>
                 </div>
                 <div class="card-body">
-                    @if(empty($categoryStats))
-                        <p>Tidak ada data</p>
+                    @if(empty($verifiedCategoryStats))
+                        <div class="alert alert-info">Tidak ada data</div>
                     @else
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
                                         <th>Kategori</th>
-                                        <th class="text-end">Jumlah</th>
+                                        <th>Jumlah</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($categoryStats as $category => $count)
+                                    @foreach($verifiedCategoryStats as $category => $count)
                                         <tr>
                                             <td>{{ $category ?? 'Tidak ada kategori' }}</td>
-                                            <td class="text-end">{{ $count }}</td>
+                                            <td>{{ $count }}</td>
                                         </tr>
                                     @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr class="fw-bold">
+                                    <tr class="font-weight-bold">
                                         <td>Total</td>
-                                        <td class="text-end">{{ array_sum($categoryStats) }}</td>
+                                        <td>{{ array_sum($verifiedCategoryStats) }}</td>
                                     </tr>
-                                </tfoot>
+                                </tbody>
                             </table>
                         </div>
                     @endif
                 </div>
             </div>
         </div>
-        
-        <!-- Orders by Gender Card -->
+        <!-- Orders by Gender Card (Verified Only) -->
         <div class="col-md-4 mb-3">
             <div class="card">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Pesanan per Gender</h5>
+                    <h5 class="mb-0">Pesanan Terverifikasi per Gender</h5>
                 </div>
                 <div class="card-body">
                     @if(empty($genderStats))
@@ -85,7 +82,6 @@
                 </div>
             </div>
         </div>
-        
         <!-- Orders by Shirt Size Card -->
         <div class="col-md-4 mb-3">
             <div class="card">
@@ -193,7 +189,7 @@
                                             </td>
                                             <td>{{ $order->jarak_lari ?? '-' }}</td>
                                             <td>{{ $order->nama_anak }}</td>
-                                            <td>{{ $order->usia_anak }}</td>
+                                            <td>{{ $order->tgl_lahir_anak }}</td>
                                             <td>{{ $order->size_anak }}</td>
                                             <td>{{ $order->bib_anak }}</td>
                                             <td>{{ $order->ticketCategory->name }}</td>

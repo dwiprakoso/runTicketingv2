@@ -133,7 +133,6 @@ class OrderController extends Controller
             $user->save();
 
             $totalPrice = $category->price;
-            $paymentDeadline = Carbon::now()->addHour();
 
             // Generate order number
             $today = Carbon::now()->format('Ymd');
@@ -161,7 +160,7 @@ class OrderController extends Controller
                 'order_number' => $orderNumber,
                 'total_price' => $totalPrice,
                 'status' => 'pending',
-                'payment_deadline' => $paymentDeadline,
+                'payment_deadline' => null, // Set payment_deadline ke null
                 'bib_name' => $request->bib_name,
                 'gender' => $request->gender,
                 'nik' => $request->nik,
@@ -172,14 +171,21 @@ class OrderController extends Controller
                 'kontak_darurat_no' => $request->kontak_darurat_no
             ];
 
-            if ($category->name === 'Fun Run') {
-                $orderData['jarak_lari'] = $request->jarak_lari;
+            // Tambahkan size_chart untuk semua kategori yang membutuhkan
+            if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
                 $orderData['size_chart'] = $request->size_chart;
+            }
+
+            // Tambahkan data khusus per kategori
+            if ($category->name === 'Fun Run' || $category->name === 'Early Bird - Fun Run 7K') {
+                if ($category->name === 'Fun Run') {
+                    $orderData['jarak_lari'] = $request->jarak_lari;
+                }
             } elseif ($category->name === 'Family Run') {
                 $orderData['nama_anak'] = $request->nama_anak;
+                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
                 $orderData['size_anak'] = $request->size_anak;
                 $orderData['bib_anak'] = $request->bib_anak;
-                $orderData['size_chart'] = $request->size_chart;
             } elseif ($category->name === 'Kids 3K') {
                 $orderData['size_anak'] = $request->size_anak;
             }
@@ -195,9 +201,8 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Dispatch reminder and expiration jobs
+            // Hanya kirim email pengingatan, tanpa job untuk expired
             SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(0));
-            ExpireOrderJob::dispatch($order)->delay($paymentDeadline);
 
             return redirect()->route('orders.payment', $order->id);
 
