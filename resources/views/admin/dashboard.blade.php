@@ -83,44 +83,83 @@
             </div>
         </div>
         <!-- Orders by Shirt Size Card -->
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Pesanan per Ukuran Baju</h5>
+        <!-- Kartu untuk Size Chart (Ukuran Dewasa) -->
+<div class="col-md-4 mb-3">
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Pesanan per Ukuran Baju (Dewasa)</h5>
+        </div>
+        <div class="card-body">
+            @if(empty($sizeChartStats))
+                <p>Tidak ada data</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ukuran</th>
+                                <th class="text-end">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($sizeChartStats as $size => $count)
+                                <tr>
+                                    <td>{{ $size }}</td>
+                                    <td class="text-end">{{ $count }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td>Total</td>
+                                <td class="text-end">{{ array_sum($sizeChartStats) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-                <div class="card-body">
-                    @if(empty($sizeStats))
-                        <p>Tidak ada data</p>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Ukuran</th>
-                                        <th class="text-end">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($sizeStats as $size => $count)
-                                        <tr>
-                                            <td>{{ $size }}</td>
-                                            <td class="text-end">{{ $count }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr class="fw-bold">
-                                        <td>Total</td>
-                                        <td class="text-end">{{ array_sum($sizeStats) }}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    @endif
-                </div>
-            </div>
+            @endif
         </div>
     </div>
+</div>
+
+<!-- Kartu untuk Size Anak (Ukuran Anak) -->
+<div class="col-md-4 mb-3">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Pesanan per Ukuran Baju (Anak)</h5>
+        </div>
+        <div class="card-body">
+            @if(empty($sizeAnakStats))
+                <p>Tidak ada data</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ukuran</th>
+                                <th class="text-end">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($sizeAnakStats as $size => $count)
+                                <tr>
+                                    <td>{{ $size }}</td>
+                                    <td class="text-end">{{ $count }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td>Total</td>
+                                <td class="text-end">{{ array_sum($sizeAnakStats) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
     <div class="row">
         <div class="col-md-12">
             <div class="card">
