@@ -38,182 +38,198 @@ class OrderController extends Controller
     }
     
     public function store(Request $request)
-    {
-        // Get the category first to use its name
-        $category = TicketCategory::findOrFail($request->ticket_category_id);
+{
+    // Tambahkan logging untuk debugging
+    Log::info('Kategori ticket request: ' . $request->ticket_category_id);
+    Log::info('Nilai tgl_lahir_anak yang diterima: ' . $request->tgl_lahir_anak);
+    
+    // Get the category first to use its name
+    $category = TicketCategory::findOrFail($request->ticket_category_id);
+    
+    Log::info('Kategori tiket: ' . $category->name);
+    
+    // Base validation rules
+    $rules = [
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'no_hp' => 'required|string|max:20',
+        'gender' => 'required|string|in:laki-laki,perempuan',
+        'nik' => 'required|string',
+        'gol_darah' => 'required|string|in:A,B,AB,O',
+        'alamat' => 'required|string',
+        'bib_name' => 'required|string|max:255',
+        'komunitas' => 'nullable|string|max:255',
+        'kontak_darurat_name' => 'required|string|max:255',
+        'kontak_darurat_no' => 'required|string|max:20',
+        'ticket_category_id' => 'required|exists:ticket_categories,id',
+    ];
+
+    // Validation rules for specific categories
+    if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
+        $rules['tgl_lahir'] = 'required|date';
+        $rules['size_chart'] = 'required|string|in:S,M,L,XL,XXL';
+    }
+
+    if ($category->name === 'Kids 3K') {
+        $rules['tgl_lahir_anak'] = ['required', 'date', function ($attribute, $value, $fail) {
+            $birthdate = Carbon::parse($value);
+            $maxAgeDate = Carbon::now()->subYears(12);
+            $minAgeDate = Carbon::now();
+            
+            if ($birthdate->lt($maxAgeDate)) {
+                $fail('Usia anak maksimal adalah 12 tahun.');
+            }
+            
+            if ($birthdate->gt($minAgeDate)) {
+                $fail('Tanggal lahir tidak boleh di masa depan.');
+            }
+        }];
+        $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
+    }
+
+    if ($category->name === 'Fun Run') {
+        $rules['jarak_lari'] = 'required|string|in:3K,7K';
+    }
+
+    if ($category->name === 'Family Run') {
+        $rules['nama_anak'] = 'required|string|max:255';
+        $rules['tgl_lahir_anak'] = 'required|date';
+        $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
+        $rules['bib_anak'] = 'required|string|max:255';
+    }
+
+    // Run validation
+    $validator = Validator::make($request->all(), $rules);
+    
+    if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput();
+    }
+
+    // Check if category has available quota
+    if ($category->availableQuota() <= 0) {
+        return redirect()->route('home')->with('error', 'Tiket untuk kategori ini telah habis.');
+    }
+
+    try {
+        DB::beginTransaction();
+
+        // User creation
+        $user = new User;
+        $user->email = $request->email;
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->no_hp = $request->no_hp;
+        $user->nik = $request->nik;
+        $user->gender = $request->gender;
+
+        // Menangani tanggal lahir dan tanggal lahir anak untuk semua kategori
+        if ($request->has('tgl_lahir')) {
+            $user->tgl_lahir = Carbon::parse($request->tgl_lahir)->format('Y-m-d');
+        }
         
-        // Base validation rules
-        $rules = [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'no_hp' => 'required|string|max:20',
-            'gender' => 'required|string|in:laki-laki,perempuan',
-            'nik' => 'required|string',
-            'gol_darah' => 'required|string|in:A,B,AB,O',
-            'alamat' => 'required|string',
-            'bib_name' => 'required|string|max:255',
-            'komunitas' => 'nullable|string|max:255',
-            'kontak_darurat_name' => 'required|string|max:255',
-            'kontak_darurat_no' => 'required|string|max:20',
-            'ticket_category_id' => 'required|exists:ticket_categories,id',
+        if ($request->has('tgl_lahir_anak')) {
+            Log::info('Mencoba menyimpan tgl_lahir_anak: ' . $request->tgl_lahir_anak);
+            $user->tgl_lahir_anak = Carbon::parse($request->tgl_lahir_anak)->format('Y-m-d');
+        }
+
+        $user->gol_darah = $request->gol_darah;
+        $user->alamat = $request->alamat;
+        $user->komunitas = $request->komunitas;
+        $user->kontak_darurat_name = $request->kontak_darurat_name;
+        $user->kontak_darurat_no = $request->kontak_darurat_no;
+        $user->save();
+        
+        Log::info('User berhasil disimpan dengan ID: ' . $user->id);
+        
+        // Log data yang disimpan
+        Log::info('Data user tersimpan: ', $user->toArray());
+
+        $totalPrice = $category->price;
+
+        // Generate order number
+        $today = Carbon::now()->format('Ymd');
+        $prefix = 'RUN-' . $today . '-';
+
+        // Cache lock for atomicity
+        $orderNumber = Cache::lock('order_number_lock', 10)->get(function () use ($prefix) {
+            $lastOrder = Order::where('order_number', 'like', $prefix . '%')
+                ->orderBy('id', 'desc')
+                ->first();
+                
+            if ($lastOrder) {
+                $lastNumber = substr($lastOrder->order_number, strlen($prefix));
+                $newNumber = (int)$lastNumber + 1;
+                return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            }
+            
+            return $prefix . '0001';
+        });
+
+        // Create new order
+        $orderData = [
+            'user_id' => $user->id,
+            'ticket_category_id' => $category->id,
+            'order_number' => $orderNumber,
+            'total_price' => $totalPrice,
+            'status' => 'pending',
+            'payment_deadline' => null, // Set payment_deadline ke null
+            'bib_name' => $request->bib_name,
+            'gender' => $request->gender,
+            'nik' => $request->nik,
+            'gol_darah' => $request->gol_darah,
+            'alamat' => $request->alamat,
+            'komunitas' => $request->komunitas,
+            'kontak_darurat_name' => $request->kontak_darurat_name,
+            'kontak_darurat_no' => $request->kontak_darurat_no
         ];
 
-        // Validation rules for specific categories
+        // Tambahkan size_chart untuk semua kategori yang membutuhkan
         if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
-            $rules['tgl_lahir'] = 'required|date';
-            $rules['size_chart'] = 'required|string|in:S,M,L,XL,XXL';
+            $orderData['size_chart'] = $request->size_chart;
         }
 
-        if ($category->name === 'Kids 3K') {
-            $rules['tgl_lahir_anak'] = ['required', 'date', function ($attribute, $value, $fail) {
-                $birthdate = Carbon::parse($value);
-                $maxAgeDate = Carbon::now()->subYears(12);
-                $minAgeDate = Carbon::now();
-                
-                if ($birthdate->lt($maxAgeDate)) {
-                    $fail('Usia anak maksimal adalah 12 tahun.');
-                }
-                
-                if ($birthdate->gt($minAgeDate)) {
-                    $fail('Tanggal lahir tidak boleh di masa depan.');
-                }
-            }];
-            $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
-        }
-
-        if ($category->name === 'Fun Run') {
-            $rules['jarak_lari'] = 'required|string|in:3K,7K';
-        }
-
-        if ($category->name === 'Family Run') {
-            $rules['nama_anak'] = 'required|string|max:255';
-            $rules['tgl_lahir_anak'] = 'required|string';
-            $rules['size_anak'] = 'required|string|in:XS,S,M,L,XL,XXL';
-            $rules['bib_anak'] = 'required|string|max:255';
-        }
-
-        // Run validation
-        $validator = Validator::make($request->all(), $rules);
-        
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        // Check if category has available quota
-        if ($category->availableQuota() <= 0) {
-            return redirect()->route('home')->with('error', 'Tiket untuk kategori ini telah habis.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // User creation
-            $user = new User;
-            $user->email = $request->email;
-            $user->first_name = $request->first_name;
-            $user->last_name = $request->last_name;
-            $user->no_hp = $request->no_hp;
-            $user->nik = $request->nik;
-            $user->gender = $request->gender;
-
-            if ($category->name === 'Fun Run' || $category->name === 'Early Bird - Fun Run 7K') {
-                $user->tgl_lahir = $request->tgl_lahir;
-            } elseif ($category->name === 'Kids 3K') {
-                $user->tgl_lahir_anak = $request->tgl_lahir_anak;
-            }elseif ($category->name === 'Family Run') {
-                $user->tgl_lahir_anak = $request->tgl_lahir_anak;
-                $user->tgl_lahir = $request->tgl_lahir;
+        // Tambahkan data khusus per kategori
+        if ($category->name === 'Fun Run' || $category->name === 'Early Bird - Fun Run 7K') {
+            if ($category->name === 'Fun Run') {
+                $orderData['jarak_lari'] = $request->jarak_lari;
             }
-
-            $user->gol_darah = $request->gol_darah;
-            $user->alamat = $request->alamat;
-            $user->komunitas = $request->komunitas;
-            $user->kontak_darurat_name = $request->kontak_darurat_name;
-            $user->kontak_darurat_no = $request->kontak_darurat_no;
-            $user->save();
-
-            $totalPrice = $category->price;
-
-            // Generate order number
-            $today = Carbon::now()->format('Ymd');
-            $prefix = 'RUN-' . $today . '-';
-
-            // Cache lock for atomicity
-            $orderNumber = Cache::lock('order_number_lock', 10)->get(function () use ($prefix) {
-                $lastOrder = Order::where('order_number', 'like', $prefix . '%')
-                    ->orderBy('id', 'desc')
-                    ->first();
-                    
-                if ($lastOrder) {
-                    $lastNumber = substr($lastOrder->order_number, strlen($prefix));
-                    $newNumber = (int)$lastNumber + 1;
-                    return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                }
-                
-                return $prefix . '0001';
-            });
-
-            // Create new order
-            $orderData = [
-                'user_id' => $user->id,
-                'ticket_category_id' => $category->id,
-                'order_number' => $orderNumber,
-                'total_price' => $totalPrice,
-                'status' => 'pending',
-                'payment_deadline' => null, // Set payment_deadline ke null
-                'bib_name' => $request->bib_name,
-                'gender' => $request->gender,
-                'nik' => $request->nik,
-                'gol_darah' => $request->gol_darah,
-                'alamat' => $request->alamat,
-                'komunitas' => $request->komunitas,
-                'kontak_darurat_name' => $request->kontak_darurat_name,
-                'kontak_darurat_no' => $request->kontak_darurat_no
-            ];
-
-            // Tambahkan size_chart untuk semua kategori yang membutuhkan
-            if ($category->name === 'Fun Run' || $category->name === 'Family Run' || $category->name === 'Early Bird - Fun Run 7K') {
-                $orderData['size_chart'] = $request->size_chart;
-            }
-
-            // Tambahkan data khusus per kategori
-            if ($category->name === 'Fun Run' || $category->name === 'Early Bird - Fun Run 7K') {
-                if ($category->name === 'Fun Run') {
-                    $orderData['jarak_lari'] = $request->jarak_lari;
-                }
-            } elseif ($category->name === 'Family Run') {
-                $orderData['nama_anak'] = $request->nama_anak;
-                $orderData['tgl_lahir_anak'] = $request->tgl_lahir_anak;
-                $orderData['size_anak'] = $request->size_anak;
-                $orderData['bib_anak'] = $request->bib_anak;
-            } elseif ($category->name === 'Kids 3K') {
-                $orderData['size_anak'] = $request->size_anak;
-            }
-
-            $order = Order::create($orderData);
-
-            // Create payment record
-            $payment = Payment::create([
-                'order_id' => $order->id,
-                'status' => 'pending',
-                'amount' => $totalPrice,
-            ]);
-
-            DB::commit();
-
-            // Hanya kirim email pengingatan, tanpa job untuk expired
-            SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(0));
-
-            return redirect()->route('orders.payment', $order->id);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        } elseif ($category->name === 'Family Run') {
+            $orderData['nama_anak'] = $request->nama_anak;
+            $orderData['tgl_lahir_anak'] = Carbon::parse($request->tgl_lahir_anak)->format('Y-m-d');
+            $orderData['size_anak'] = $request->size_anak;
+            $orderData['bib_anak'] = $request->bib_anak;
+        } elseif ($category->name === 'Kids 3K') {
+            $orderData['size_anak'] = $request->size_anak;
+            $orderData['tgl_lahir_anak'] = Carbon::parse($request->tgl_lahir_anak)->format('Y-m-d');
         }
+
+        $order = Order::create($orderData);
+        Log::info('Order berhasil dibuat dengan ID: ' . $order->id);
+
+        // Create payment record
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'status' => 'pending',
+            'amount' => $totalPrice,
+        ]);
+
+        DB::commit();
+
+        // Hanya kirim email pengingatan, tanpa job untuk expired
+        SendPaymentReminderEmail::dispatch($order)->delay(Carbon::now()->addMinutes(0));
+
+        return redirect()->route('orders.payment', $order->id);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error dalam proses store: ' . $e->getMessage());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
     }
+}
 
     
     public function showPayment($orderId)
